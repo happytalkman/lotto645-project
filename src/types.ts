@@ -113,6 +113,74 @@ export interface StatisticsResult {
   data: Record<string, any>;
   visualization?: string; // Chart.js 설정 JSON
   summary: string;
+  recommended_numbers: number[]; // 분석 기반 추천 번호
+  explanation: string; // 분석 방법 및 추천 이유 설명
+}
+
+// 사용자 세션 타입
+export interface UserSession {
+  id: number;
+  session_id: string;
+  user_id?: number;
+  username: string;
+  email?: string;
+  created_at?: string;
+  expires_at: string;
+}
+
+// 예측저장 타입
+export interface SavedPrediction {
+  id: number;
+  user_id: number;
+  session_id: string;
+  prediction_type: PredictionAlgorithm;
+  predicted_numbers: number[];
+  confidence_score?: number;
+  memo?: string;
+  virtual_round?: number;
+  is_favorite: boolean;
+  tags?: string[];
+  created_at?: string;
+  updated_at?: string;
+}
+
+// 개인화 추천 타입
+export interface PersonalizedRecommendation {
+  id: number;
+  user_id: number;
+  based_on_predictions: number[]; // SavedPrediction ID들
+  recommended_numbers: number[];
+  algorithm_used: string;
+  confidence_score?: number;
+  explanation?: string;
+  created_at?: string;
+}
+
+// 사용자 예측 패턴 타입
+export interface UserPredictionPattern {
+  id: number;
+  user_id: number;
+  pattern_type: 'frequent_numbers' | 'number_combinations' | 'algorithm_preference' | 'time_patterns' | 'memo_keywords';
+  pattern_data: Record<string, any>;
+  frequency: number;
+  last_updated?: string;
+}
+
+// 예측저장 요청 타입
+export interface SavePredictionRequest {
+  prediction_type: PredictionAlgorithm;
+  predicted_numbers: number[];
+  confidence_score?: number;
+  memo?: string;
+  virtual_round?: number;
+  tags?: string[];
+}
+
+// 개인화 추천 요청 타입
+export interface PersonalizedRecommendationRequest {
+  based_on_prediction_ids?: number[];
+  algorithm_preference?: PredictionAlgorithm[];
+  include_favorites_only?: boolean;
 }
 
 export interface Bindings {

@@ -43,10 +43,66 @@ app.get('/', (c) => {
                         <a href="#prediction" class="hover:text-blue-200">AI 예측</a>
                         <a href="#chatbot" class="hover:text-blue-200">AI 챗봇</a>
                         <a href="#stores" class="hover:text-blue-200">명당 정보</a>
+                        <a href="#saved-predictions" class="hover:text-blue-200" id="nav-saved" style="display: none;">예측저장</a>
                     </nav>
+                    <div class="flex items-center space-x-4">
+                        <div id="user-info" class="hidden">
+                            <span class="text-sm">안녕하세요, <span id="username-display"></span>님</span>
+                        </div>
+                        <button id="login-btn" onclick="showLoginModal()" class="bg-white bg-opacity-20 text-white px-4 py-2 rounded-lg hover:bg-opacity-30 transition-colors">
+                            로그인
+                        </button>
+                        <button id="logout-btn" onclick="logout()" class="hidden bg-red-500 bg-opacity-80 text-white px-4 py-2 rounded-lg hover:bg-opacity-100 transition-colors">
+                            로그아웃
+                        </button>
+                    </div>
                 </div>
             </div>
         </header>
+
+        <!-- 로그인 모달 -->
+        <div id="login-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+            <div class="flex items-center justify-center min-h-screen p-4">
+                <div class="bg-white rounded-lg p-6 w-full max-w-md">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold">로그인 / 회원가입</h3>
+                        <button onclick="hideLoginModal()" class="text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <form id="login-form" onsubmit="handleLogin(event)">
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">사용자명 *</label>
+                                <input type="text" id="username-input" required 
+                                       class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500"
+                                       placeholder="닉네임을 입력하세요">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">이메일 (선택사항)</label>
+                                <input type="email" id="email-input" 
+                                       class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500"
+                                       placeholder="이메일을 입력하세요 (선택사항)">
+                            </div>
+                            <div class="text-sm text-gray-600">
+                                <p>• 이메일 없이도 게스트로 로그인할 수 있습니다</p>
+                                <p>• 예측 저장 기능을 사용하려면 로그인이 필요합니다</p>
+                            </div>
+                        </div>
+                        <div class="flex space-x-2 mt-6">
+                            <button type="button" onclick="hideLoginModal()" 
+                                    class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400">
+                                취소
+                            </button>
+                            <button type="submit" 
+                                    class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700">
+                                로그인
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
 
         <!-- 메인 컨텐츠 -->
         <main class="container mx-auto px-4 py-8 space-y-8">
@@ -123,11 +179,15 @@ app.get('/', (c) => {
                     </button>
                 </div>
                 <div id="analysis-result" class="hidden">
-                    <h3 class="font-semibold mb-2">분석 결과</h3>
+                    <div id="analysis-summary" class="mb-6"></div>
                     <div id="analysis-chart" class="mb-4">
-                        <canvas id="analysisChart" width="400" height="200"></canvas>
+                        <div class="bg-white border rounded-lg p-4">
+                            <h4 class="font-semibold mb-3 text-center">분석 차트</h4>
+                            <div class="flex justify-center">
+                                <canvas id="analysisChart" style="max-width: 600px; max-height: 400px;"></canvas>
+                            </div>
+                        </div>
                     </div>
-                    <div id="analysis-summary" class="bg-gray-50 p-4 rounded-lg"></div>
                 </div>
             </section>
 
@@ -191,6 +251,112 @@ app.get('/', (c) => {
                 <div id="lucky-stores" class="grid md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
             </section>
         </main>
+
+            <!-- 예측저장 관리 섹션 -->
+            <section id="saved-predictions" class="bg-white rounded-lg shadow-lg p-6 hidden">
+                <h2 class="text-xl font-bold mb-4 flex items-center justify-between">
+                    <div>
+                        <i class="fas fa-save text-purple-500 mr-2"></i>
+                        나의 예측저장
+                    </div>
+                    <button onclick="getPersonalizedRecommendation()" 
+                            class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 text-sm">
+                        <i class="fas fa-magic mr-1"></i>
+                        개인화 추천받기
+                    </button>
+                </h2>
+                
+                <!-- 저장된 예측 필터 -->
+                <div class="mb-4 flex flex-wrap gap-2">
+                    <button onclick="filterSavedPredictions('all')" class="filter-btn active bg-blue-100 text-blue-700 px-3 py-1 rounded-lg text-sm">
+                        전체
+                    </button>
+                    <button onclick="filterSavedPredictions('favorites')" class="filter-btn bg-gray-100 text-gray-700 px-3 py-1 rounded-lg text-sm hover:bg-gray-200">
+                        즐겨찾기
+                    </button>
+                    <button onclick="filterSavedPredictions('recent')" class="filter-btn bg-gray-100 text-gray-700 px-3 py-1 rounded-lg text-sm hover:bg-gray-200">
+                        최근 7일
+                    </button>
+                </div>
+
+                <!-- 저장된 예측 목록 -->
+                <div id="saved-predictions-list" class="space-y-3">
+                    <div class="text-center text-gray-500 py-8">
+                        저장된 예측이 없습니다. AI 예측을 실행한 후 저장해보세요!
+                    </div>
+                </div>
+
+                <!-- 페이지네이션 -->
+                <div id="saved-predictions-pagination" class="mt-4 flex justify-center space-x-2 hidden">
+                    <button onclick="loadSavedPredictions(currentPage - 1)" id="prev-page" 
+                            class="bg-gray-300 text-gray-700 px-3 py-1 rounded hover:bg-gray-400" disabled>
+                        이전
+                    </button>
+                    <span id="page-info" class="px-3 py-1">1 / 1</span>
+                    <button onclick="loadSavedPredictions(currentPage + 1)" id="next-page" 
+                            class="bg-gray-300 text-gray-700 px-3 py-1 rounded hover:bg-gray-400" disabled>
+                        다음
+                    </button>
+                </div>
+            </section>
+
+            <!-- 예측 저장 모달 -->
+            <div id="save-prediction-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+                <div class="flex items-center justify-center min-h-screen p-4">
+                    <div class="bg-white rounded-lg p-6 w-full max-w-lg">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-xl font-bold">예측 저장하기</h3>
+                            <button onclick="hideSavePredictionModal()" class="text-gray-500 hover:text-gray-700">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <div class="text-sm text-gray-600 mb-2">예측 번호:</div>
+                            <div id="save-prediction-numbers" class="flex space-x-2 mb-4">
+                                <!-- 번호들이 여기에 표시됩니다 -->
+                            </div>
+                            <div class="text-sm text-gray-600">
+                                <div>알고리즘: <span id="save-prediction-algorithm"></span></div>
+                                <div>신뢰도: <span id="save-prediction-confidence"></span></div>
+                            </div>
+                        </div>
+
+                        <form id="save-prediction-form" onsubmit="handleSavePrediction(event)">
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">가상회차</label>
+                                    <input type="number" id="virtual-round-input" min="1" 
+                                           class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500"
+                                           placeholder="자동 생성됩니다 (수정 가능)">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">메모</label>
+                                    <textarea id="memo-input" rows="3" 
+                                              class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500"
+                                              placeholder="예측에 대한 메모를 입력하세요 (선택사항)"></textarea>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">태그</label>
+                                    <input type="text" id="tags-input" 
+                                           class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500"
+                                           placeholder="태그를 쉼표로 구분하여 입력하세요 (예: 연속번호, 높은신뢰도)">
+                                </div>
+                            </div>
+                            <div class="flex space-x-2 mt-6">
+                                <button type="button" onclick="hideSavePredictionModal()" 
+                                        class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400">
+                                    취소
+                                </button>
+                                <button type="submit" 
+                                        class="flex-1 bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700">
+                                    저장하기
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
 
         <!-- 자바스크립트 -->
         <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
@@ -303,13 +469,182 @@ app.get('/', (c) => {
             // 분석 결과 표시
             function displayAnalysisResult(result) {
                 document.getElementById('analysis-result').classList.remove('hidden');
-                document.getElementById('analysis-summary').innerHTML = result.summary;
                 
-                // 차트 표시 (간단한 예시)
+                // 분석 타입에 따른 제목
+                const analysisNames = {
+                    'frequency_analysis': '빈도 분석',
+                    'hot_cold_numbers': '핫/콜드 번호 분석',
+                    'pattern_analysis': '패턴 분석',
+                    'correlation_analysis': '상관관계 분석',
+                    'trend_analysis': '트렌드 분석',
+                    'distribution_analysis': '분포 분석',
+                    'sequence_analysis': '연속 분석',
+                    'probability_analysis': '확률 분석'
+                };
+
+                const analysisTitle = analysisNames[result.type] || '통계 분석';
+                
+                // 추천 번호 HTML 생성 (색깔 구분)
+                const numbersHtml = result.recommended_numbers ? result.recommended_numbers.map(num => {
+                    let colorClass = 'bg-blue-600'; // 기본 색상
+                    if (num <= 10) colorClass = 'bg-red-600';      // 1-10: 빨강
+                    else if (num <= 20) colorClass = 'bg-orange-600'; // 11-20: 주황
+                    else if (num <= 30) colorClass = 'bg-yellow-600'; // 21-30: 노랑
+                    else if (num <= 40) colorClass = 'bg-green-600';  // 31-40: 녹색
+                    else colorClass = 'bg-blue-600';                  // 41-45: 파랑
+                    
+                    return \`<span class="inline-block w-10 h-10 \${colorClass} text-white rounded-full flex items-center justify-center font-bold mr-2">\${num}</span>\`;
+                }).join('') : '';
+                
+                // 분석 결과 HTML 구성
+                const resultHtml = \`
+                    <div class="mb-4">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="text-lg font-bold flex items-center">
+                                <i class="fas fa-chart-bar text-green-600 mr-2"></i>
+                                \${analysisTitle} 결과
+                            </h3>
+                            <button onclick="showAnalysisExplanation('\${result.type}', \${JSON.stringify(result.explanation).replace(/"/g, '&quot;')})" 
+                                    class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded-lg text-sm flex items-center">
+                                <i class="fas fa-question-circle mr-1"></i>
+                                분석 설명
+                            </button>
+                        </div>
+                        
+                        \${numbersHtml ? \`
+                            <div class="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg p-4 mb-4">
+                                <div class="flex items-center justify-between mb-3">
+                                    <h4 class="font-semibold text-green-800">
+                                        <i class="fas fa-lightbulb mr-2"></i>분석 기반 추천 번호
+                                    </h4>
+                                    <button onclick="saveAnalysisResult('\${result.type}', [\${result.recommended_numbers.join(',')}], '\${analysisTitle}')" 
+                                            class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 \${currentUser ? '' : 'hidden'}">
+                                        <i class="fas fa-save mr-1"></i>예측번호 저장
+                                    </button>
+                                </div>
+                                <div class="flex justify-center items-center mb-3">
+                                    \${numbersHtml}
+                                </div>
+                                <div class="text-sm text-green-700 text-center">
+                                    \${result.explanation || '통계 분석을 통해 선별된 추천 번호입니다.'}
+                                </div>
+                            </div>
+                        \` : ''}
+                        
+                        <div class="bg-gray-50 p-4 rounded-lg mb-4">
+                            <h4 class="font-semibold mb-2">분석 요약</h4>
+                            <p class="text-gray-700">\${result.summary}</p>
+                        </div>
+                    </div>
+                \`;
+                
+                document.getElementById('analysis-summary').innerHTML = resultHtml;
+                
+                // 차트 표시
                 if (result.visualization) {
-                    const ctx = document.getElementById('analysisChart').getContext('2d');
-                    new Chart(ctx, JSON.parse(result.visualization));
+                    try {
+                        const ctx = document.getElementById('analysisChart').getContext('2d');
+                        // 기존 차트 제거
+                        if (window.currentChart) {
+                            window.currentChart.destroy();
+                        }
+                        window.currentChart = new Chart(ctx, JSON.parse(result.visualization));
+                    } catch (error) {
+                        console.error('Chart rendering error:', error);
+                        document.getElementById('analysis-chart').innerHTML = '<div class="text-gray-500 text-center py-4">차트를 표시할 수 없습니다.</div>';
+                    }
                 }
+            }
+
+            // 분석 설명 팝업 표시
+            function showAnalysisExplanation(analysisType, explanation) {
+                const analysisNames = {
+                    'frequency_analysis': '빈도 분석',
+                    'hot_cold_numbers': '핫/콜드 번호 분석', 
+                    'pattern_analysis': '패턴 분석',
+                    'correlation_analysis': '상관관계 분석',
+                    'trend_analysis': '트렌드 분석',
+                    'distribution_analysis': '분포 분석',
+                    'sequence_analysis': '연속 분석',
+                    'probability_analysis': '확률 분석'
+                };
+
+                const analysisTitle = analysisNames[analysisType] || '통계 분석';
+                
+                // 분석별 상세 설명
+                const detailedExplanations = {
+                    'frequency_analysis': '과거 모든 당첨 번호의 출현 빈도를 계산하여 가장 자주 나온 번호들을 분석합니다. 통계적으로 자주 출현한 번호가 향후에도 나올 가능성을 고려한 방법입니다.',
+                    'hot_cold_numbers': '최근 일정 기간 동안 자주 나온 핫번호와 적게 나온 콜드번호를 구분하여 분석합니다. 핫번호의 지속성과 콜드번호의 반등 가능성을 동시에 고려합니다.',
+                    'pattern_analysis': '홀짝 비율, 고저구간 분포, 연속번호 출현 등의 패턴을 분석합니다. 일반적으로 균형잡힌 패턴이 나타나는 경향을 활용한 분석 방법입니다.',
+                    'correlation_analysis': '특정 번호들이 함께 나오는 빈도를 분석하여 상관관계를 파악합니다. 과거 데이터에서 자주 함께 출현한 번호 조합을 찾아내는 방법입니다.',
+                    'trend_analysis': '시간의 흐름에 따른 각 번호의 출현 추이를 분석합니다. 최근 상승 트렌드를 보이는 번호들을 식별하여 향후 출현 가능성을 예측합니다.',
+                    'distribution_analysis': '전체 번호 범위를 여러 구간으로 나누어 각 구간별 출현 분포를 분석합니다. 구간별 균형을 고려한 번호 선택 전략입니다.',
+                    'sequence_analysis': '연속된 번호들의 출현 패턴을 분석합니다. 연속번호가 나올 확률과 패턴을 파악하여 적절한 연속성을 가진 번호를 선택합니다.',
+                    'probability_analysis': '이론적 확률 대비 실제 출현 확률을 비교 분석합니다. 확률적으로 균형잡힌 번호와 저평가된 번호를 조합하는 수학적 접근 방법입니다.'
+                };
+
+                const detailedExplanation = detailedExplanations[analysisType] || explanation;
+                
+                const modal = document.createElement('div');
+                modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
+                modal.innerHTML = \`
+                    <div class="bg-white rounded-lg p-6 max-w-2xl w-full max-h-96 overflow-y-auto">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-xl font-bold text-gray-800">
+                                <i class="fas fa-info-circle text-blue-600 mr-2"></i>
+                                \${analysisTitle} 설명
+                            </h3>
+                            <button onclick="this.closest('.fixed').remove()" class="text-gray-500 hover:text-gray-700">
+                                <i class="fas fa-times text-xl"></i>
+                            </button>
+                        </div>
+                        <div class="space-y-4 text-gray-700">
+                            <div>
+                                <h4 class="font-semibold text-gray-800 mb-2">분석 방법</h4>
+                                <p>\${detailedExplanation}</p>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-gray-800 mb-2">이번 분석 결과</h4>
+                                <p>\${explanation}</p>
+                            </div>
+                            <div class="bg-yellow-50 border border-yellow-200 rounded p-3">
+                                <p class="text-yellow-800 text-sm">
+                                    <i class="fas fa-exclamation-triangle mr-1"></i>
+                                    <strong>주의사항:</strong> 모든 통계 분석은 참고용이며, 로또는 순수한 확률 게임입니다. 
+                                    과도한 의존보다는 재미있는 분석 도구로 활용하시기 바랍니다.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="mt-6 text-center">
+                            <button onclick="this.closest('.fixed').remove()" 
+                                    class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
+                                확인
+                            </button>
+                        </div>
+                    </div>
+                \`;
+                
+                document.body.appendChild(modal);
+            }
+
+            // 분석 결과를 예측으로 저장
+            function saveAnalysisResult(analysisType, numbers, analysisName) {
+                if (!currentUser) {
+                    alert('로그인 후 분석 결과를 저장할 수 있습니다.');
+                    showLoginModal();
+                    return;
+                }
+
+                const predictionData = {
+                    numbers: numbers,
+                    algorithm: 'statistical_analysis',
+                    confidence: 0.75, // 통계 분석의 기본 신뢰도
+                    explanation: \`\${analysisName}을 통해 도출된 추천 번호입니다.\`,
+                    reason: \`통계적 분석을 바탕으로 75% 신뢰도로 추천됩니다.\`,
+                    analysisType: analysisType
+                };
+
+                showSavePredictionModal(predictionData);
             }
 
             // AI 예측 실행
@@ -337,7 +672,14 @@ app.get('/', (c) => {
                 resultCard.innerHTML = \`
                     <div class="flex justify-between items-center mb-2">
                         <h4 class="font-semibold">\${getAlgorithmName(prediction.algorithm)}</h4>
-                        <span class="text-sm bg-purple-200 px-2 py-1 rounded">신뢰도: \${(prediction.confidence * 100).toFixed(1)}%</span>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-sm bg-purple-200 px-2 py-1 rounded">신뢰도: \${(prediction.confidence * 100).toFixed(1)}%</span>
+                            <button onclick="showSavePredictionModal(\${JSON.stringify(prediction).replace(/"/g, '&quot;')})" 
+                                    class="bg-purple-600 text-white px-3 py-1 rounded text-sm hover:bg-purple-700 \${currentUser ? '' : 'hidden'}"
+                                    title="예측 결과 저장하기">
+                                <i class="fas fa-save mr-1"></i>저장
+                            </button>
+                        </div>
                     </div>
                     <div class="flex items-center mb-2">
                         \${numbersHtml}
@@ -401,6 +743,423 @@ app.get('/', (c) => {
                     </div>
                 \`).join('');
             }
+
+            // =================== 사용자 인증 관련 ===================
+            let currentUser = null;
+            let currentSessionId = null;
+            let currentPage = 1;
+
+            // 페이지 로드 시 세션 확인
+            document.addEventListener('DOMContentLoaded', function() {
+                checkSession();
+            });
+
+            // 세션 확인
+            async function checkSession() {
+                const sessionId = localStorage.getItem('sessionId');
+                if (!sessionId) return;
+
+                try {
+                    const response = await axios.get(\`\${API_BASE}/auth/session/\${sessionId}\`);
+                    if (response.data.success) {
+                        currentUser = response.data.data.user;
+                        currentSessionId = sessionId;
+                        updateUIForLoggedInUser();
+                    } else {
+                        localStorage.removeItem('sessionId');
+                    }
+                } catch (error) {
+                    localStorage.removeItem('sessionId');
+                }
+            }
+
+            // 로그인 UI 업데이트
+            function updateUIForLoggedInUser() {
+                if (currentUser) {
+                    document.getElementById('login-btn').style.display = 'none';
+                    document.getElementById('logout-btn').style.display = 'block';
+                    document.getElementById('user-info').style.display = 'block';
+                    document.getElementById('nav-saved').style.display = 'block';
+                    document.getElementById('username-display').textContent = currentUser.username;
+                    
+                    // 예측 결과의 저장 버튼들 표시
+                    const saveButtons = document.querySelectorAll('.prediction-save-btn');
+                    saveButtons.forEach(btn => btn.style.display = 'inline-block');
+                }
+            }
+
+            // 로그아웃 UI 업데이트
+            function updateUIForLoggedOutUser() {
+                document.getElementById('login-btn').style.display = 'block';
+                document.getElementById('logout-btn').style.display = 'none';
+                document.getElementById('user-info').style.display = 'none';
+                document.getElementById('nav-saved').style.display = 'none';
+                document.getElementById('saved-predictions').style.display = 'none';
+                
+                // 예측 결과의 저장 버튼들 숨기기
+                const saveButtons = document.querySelectorAll('.prediction-save-btn');
+                saveButtons.forEach(btn => btn.style.display = 'none');
+                
+                currentUser = null;
+                currentSessionId = null;
+            }
+
+            // 로그인 모달 표시
+            function showLoginModal() {
+                document.getElementById('login-modal').classList.remove('hidden');
+            }
+
+            // 로그인 모달 숨기기
+            function hideLoginModal() {
+                document.getElementById('login-modal').classList.add('hidden');
+                document.getElementById('login-form').reset();
+            }
+
+            // 로그인 처리
+            async function handleLogin(event) {
+                event.preventDefault();
+                
+                const username = document.getElementById('username-input').value.trim();
+                const email = document.getElementById('email-input').value.trim();
+                
+                if (!username) {
+                    alert('사용자명을 입력해주세요.');
+                    return;
+                }
+
+                try {
+                    const response = await axios.post(\`\${API_BASE}/auth/login\`, {
+                        username,
+                        email: email || null
+                    });
+
+                    if (response.data.success) {
+                        currentUser = response.data.data.user;
+                        currentSessionId = response.data.data.sessionId;
+                        localStorage.setItem('sessionId', currentSessionId);
+                        
+                        hideLoginModal();
+                        updateUIForLoggedInUser();
+                        
+                        alert(\`환영합니다, \${currentUser.username}님!\`);
+                    } else {
+                        alert(response.data.error || '로그인에 실패했습니다.');
+                    }
+                } catch (error) {
+                    console.error('Login error:', error);
+                    alert('로그인 중 오류가 발생했습니다.');
+                }
+            }
+
+            // 로그아웃
+            async function logout() {
+                try {
+                    if (currentSessionId) {
+                        await axios.post(\`\${API_BASE}/auth/logout\`, {
+                            sessionId: currentSessionId
+                        });
+                    }
+                } catch (error) {
+                    console.error('Logout error:', error);
+                }
+
+                localStorage.removeItem('sessionId');
+                updateUIForLoggedOutUser();
+                alert('로그아웃되었습니다.');
+            }
+
+            // =================== 예측저장 관련 ===================
+            
+            // 예측 저장 모달 표시
+            function showSavePredictionModal(prediction) {
+                if (!currentUser) {
+                    alert('로그인 후 예측을 저장할 수 있습니다.');
+                    showLoginModal();
+                    return;
+                }
+
+                // 예측 데이터를 모달에 설정
+                const numbersHtml = prediction.numbers.map(num => 
+                    \`<span class="inline-block w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center text-sm font-bold">\${num}</span>\`
+                ).join('');
+                
+                document.getElementById('save-prediction-numbers').innerHTML = numbersHtml;
+                document.getElementById('save-prediction-algorithm').textContent = getAlgorithmName(prediction.algorithm);
+                document.getElementById('save-prediction-confidence').textContent = \`\${(prediction.confidence * 100).toFixed(1)}%\`;
+                
+                // 폼에 예측 데이터 저장
+                document.getElementById('save-prediction-form').dataset.prediction = JSON.stringify(prediction);
+                
+                document.getElementById('save-prediction-modal').classList.remove('hidden');
+            }
+
+            // 예측 저장 모달 숨기기
+            function hideSavePredictionModal() {
+                document.getElementById('save-prediction-modal').classList.add('hidden');
+                document.getElementById('save-prediction-form').reset();
+            }
+
+            // 예측 저장 처리
+            async function handleSavePrediction(event) {
+                event.preventDefault();
+                
+                if (!currentUser || !currentSessionId) {
+                    alert('로그인이 필요합니다.');
+                    return;
+                }
+
+                const form = event.target;
+                const prediction = JSON.parse(form.dataset.prediction);
+                
+                const virtualRound = document.getElementById('virtual-round-input').value;
+                const memo = document.getElementById('memo-input').value.trim();
+                const tagsInput = document.getElementById('tags-input').value.trim();
+                const tags = tagsInput ? tagsInput.split(',').map(tag => tag.trim()).filter(tag => tag) : [];
+
+                try {
+                    const response = await axios.post(\`\${API_BASE}/predictions/save\`, {
+                        sessionId: currentSessionId,
+                        prediction_type: prediction.algorithm,
+                        predicted_numbers: prediction.numbers,
+                        confidence_score: prediction.confidence,
+                        memo: memo || null,
+                        virtual_round: virtualRound ? parseInt(virtualRound) : null,
+                        tags
+                    });
+
+                    if (response.data.success) {
+                        hideSavePredictionModal();
+                        alert(\`예측이 가상회차 \${response.data.data.virtual_round}번으로 저장되었습니다!\`);
+                        
+                        // 저장된 예측 목록이 열려있다면 새로고침
+                        if (!document.getElementById('saved-predictions').classList.contains('hidden')) {
+                            loadSavedPredictions();
+                        }
+                    } else {
+                        alert(response.data.error || '예측 저장에 실패했습니다.');
+                    }
+                } catch (error) {
+                    console.error('Save prediction error:', error);
+                    alert('예측 저장 중 오류가 발생했습니다.');
+                }
+            }
+
+            // 저장된 예측 목록 불러오기
+            async function loadSavedPredictions(page = 1) {
+                if (!currentUser || !currentSessionId) return;
+
+                try {
+                    const response = await axios.get(\`\${API_BASE}/predictions/saved/\${currentSessionId}?page=\${page}&limit=10\`);
+                    
+                    if (response.data.success) {
+                        displaySavedPredictions(response.data.data.predictions);
+                        updatePagination(response.data.data.pagination);
+                        currentPage = page;
+                    }
+                } catch (error) {
+                    console.error('Load saved predictions error:', error);
+                }
+            }
+
+            // 저장된 예측 표시
+            function displaySavedPredictions(predictions) {
+                const listDiv = document.getElementById('saved-predictions-list');
+                
+                if (predictions.length === 0) {
+                    listDiv.innerHTML = '<div class="text-center text-gray-500 py-8">저장된 예측이 없습니다.</div>';
+                    return;
+                }
+
+                listDiv.innerHTML = predictions.map(pred => {
+                    const numbersHtml = pred.predicted_numbers.map(num => 
+                        \`<span class="inline-block w-6 h-6 bg-purple-600 text-white rounded-full flex items-center justify-center text-xs font-bold mr-1">\${num}</span>\`
+                    ).join('');
+                    
+                    const tagsHtml = pred.tags.length > 0 ? 
+                        pred.tags.map(tag => \`<span class="bg-gray-200 text-gray-700 px-2 py-1 rounded text-xs mr-1">\${tag}</span>\`).join('') : '';
+
+                    return \`
+                        <div class="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                            <div class="flex justify-between items-start mb-2">
+                                <div>
+                                    <div class="font-semibold text-sm text-gray-800">가상회차 \${pred.virtual_round}번</div>
+                                    <div class="text-xs text-gray-500">\${new Date(pred.created_at).toLocaleString()}</div>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">\${getAlgorithmName(pred.prediction_type)}</span>
+                                    \${pred.confidence_score ? \`<span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">\${(pred.confidence_score * 100).toFixed(1)}%</span>\` : ''}
+                                </div>
+                            </div>
+                            <div class="flex items-center mb-2">
+                                \${numbersHtml}
+                            </div>
+                            \${pred.memo ? \`<div class="text-sm text-gray-600 mb-2"><i class="fas fa-sticky-note mr-1"></i>\${pred.memo}</div>\` : ''}
+                            \${tagsHtml ? \`<div class="mb-2">\${tagsHtml}</div>\` : ''}
+                            <div class="flex justify-end space-x-2 text-xs">
+                                <button onclick="toggleFavorite(\${pred.id}, \${pred.is_favorite})" 
+                                        class="text-yellow-600 hover:text-yellow-700">
+                                    <i class="fas fa-star\${pred.is_favorite ? '' : '-o'} mr-1"></i>
+                                    \${pred.is_favorite ? '즐겨찾기 해제' : '즐겨찾기'}
+                                </button>
+                                <button onclick="deleteSavedPrediction(\${pred.id})" 
+                                        class="text-red-600 hover:text-red-700">
+                                    <i class="fas fa-trash mr-1"></i>삭제
+                                </button>
+                            </div>
+                        </div>
+                    \`;
+                }).join('');
+            }
+
+            // 페이지네이션 업데이트
+            function updatePagination(pagination) {
+                const paginationDiv = document.getElementById('saved-predictions-pagination');
+                
+                if (pagination.totalPages <= 1) {
+                    paginationDiv.classList.add('hidden');
+                    return;
+                }
+
+                paginationDiv.classList.remove('hidden');
+                document.getElementById('page-info').textContent = \`\${pagination.page} / \${pagination.totalPages}\`;
+                
+                const prevBtn = document.getElementById('prev-page');
+                const nextBtn = document.getElementById('next-page');
+                
+                prevBtn.disabled = pagination.page <= 1;
+                nextBtn.disabled = pagination.page >= pagination.totalPages;
+                
+                prevBtn.className = \`px-3 py-1 rounded \${pagination.page <= 1 ? 'bg-gray-200 text-gray-400' : 'bg-gray-300 text-gray-700 hover:bg-gray-400'}\`;
+                nextBtn.className = \`px-3 py-1 rounded \${pagination.page >= pagination.totalPages ? 'bg-gray-200 text-gray-400' : 'bg-gray-300 text-gray-700 hover:bg-gray-400'}\`;
+            }
+
+            // 저장된 예측 삭제
+            async function deleteSavedPrediction(predictionId) {
+                if (!confirm('정말로 이 예측을 삭제하시겠습니까?')) return;
+
+                try {
+                    const response = await axios.delete(\`\${API_BASE}/predictions/saved/\${predictionId}\`, {
+                        headers: { 'X-Session-ID': currentSessionId }
+                    });
+
+                    if (response.data.success) {
+                        alert('예측이 삭제되었습니다.');
+                        loadSavedPredictions(currentPage);
+                    } else {
+                        alert(response.data.error || '예측 삭제에 실패했습니다.');
+                    }
+                } catch (error) {
+                    console.error('Delete prediction error:', error);
+                    alert('예측 삭제 중 오류가 발생했습니다.');
+                }
+            }
+
+            // 즐겨찾기 토글
+            async function toggleFavorite(predictionId, currentFavorite) {
+                try {
+                    const response = await axios.put(\`\${API_BASE}/predictions/saved/\${predictionId}\`, {
+                        sessionId: currentSessionId,
+                        is_favorite: !currentFavorite
+                    });
+
+                    if (response.data.success) {
+                        loadSavedPredictions(currentPage);
+                    }
+                } catch (error) {
+                    console.error('Toggle favorite error:', error);
+                }
+            }
+
+            // 개인화 추천 받기
+            async function getPersonalizedRecommendation() {
+                if (!currentUser || !currentSessionId) {
+                    alert('로그인이 필요합니다.');
+                    return;
+                }
+
+                try {
+                    const response = await axios.post(\`\${API_BASE}/recommendations/personalized\`, {
+                        sessionId: currentSessionId,
+                        include_favorites_only: false
+                    });
+
+                    if (response.data.success) {
+                        const recommendation = response.data.data;
+                        displayPersonalizedRecommendation(recommendation);
+                    } else {
+                        alert(response.data.error || '개인화 추천 생성에 실패했습니다.');
+                    }
+                } catch (error) {
+                    console.error('Personalized recommendation error:', error);
+                    alert('개인화 추천 생성 중 오류가 발생했습니다.');
+                }
+            }
+
+            // 개인화 추천 결과 표시
+            function displayPersonalizedRecommendation(recommendation) {
+                const numbersHtml = recommendation.numbers.map(num => 
+                    \`<span class="inline-block w-10 h-10 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-full flex items-center justify-center font-bold mr-2">\${num}</span>\`
+                ).join('');
+
+                const resultHtml = \`
+                    <div class="bg-gradient-to-r from-purple-100 to-pink-100 border border-purple-300 rounded-lg p-6 mb-4">
+                        <div class="flex justify-between items-center mb-4">
+                            <h4 class="text-lg font-bold text-purple-800">
+                                <i class="fas fa-magic mr-2"></i>개인화 추천 번호
+                            </h4>
+                            <div class="flex items-center space-x-2">
+                                <span class="bg-purple-200 text-purple-800 px-3 py-1 rounded-full text-sm font-semibold">
+                                    신뢰도: \${(recommendation.confidence * 100).toFixed(1)}%
+                                </span>
+                                <button onclick="showSavePredictionModal({
+                                    numbers: [\${recommendation.numbers.join(',')}],
+                                    algorithm: 'personalized_rag',
+                                    confidence: \${recommendation.confidence},
+                                    explanation: '\${recommendation.explanation}',
+                                    reason: '\${recommendation.reason}'
+                                })" class="bg-purple-600 text-white px-3 py-1 rounded text-sm hover:bg-purple-700">
+                                    <i class="fas fa-save mr-1"></i>저장
+                                </button>
+                            </div>
+                        </div>
+                        <div class="flex justify-center items-center mb-4">
+                            \${numbersHtml}
+                        </div>
+                        <div class="text-center">
+                            <p class="text-purple-700 font-medium mb-2">\${recommendation.explanation}</p>
+                            <p class="text-purple-600 text-sm">\${recommendation.reason}</p>
+                            <p class="text-xs text-purple-500 mt-2">
+                                <i class="fas fa-info-circle mr-1"></i>
+                                \${recommendation.based_on_count}개의 저장된 예측을 기반으로 생성되었습니다.
+                            </p>
+                        </div>
+                    </div>
+                \`;
+
+                // 예측 결과 영역에 추가
+                const resultsDiv = document.getElementById('prediction-results');
+                resultsDiv.insertAdjacentHTML('afterbegin', resultHtml);
+            }
+
+            // 예측저장 섹션 표시/숨기기
+            function toggleSavedPredictionsSection() {
+                const section = document.getElementById('saved-predictions');
+                if (section.classList.contains('hidden')) {
+                    section.classList.remove('hidden');
+                    loadSavedPredictions();
+                } else {
+                    section.classList.add('hidden');
+                }
+            }
+
+            // 네비게이션 클릭 이벤트 업데이트
+            document.addEventListener('DOMContentLoaded', function() {
+                // 예측저장 네비게이션 클릭 이벤트
+                document.getElementById('nav-saved').addEventListener('click', function(e) {
+                    e.preventDefault();
+                    toggleSavedPredictionsSection();
+                });
+            });
         </script>
     </body>
     </html>
@@ -592,6 +1351,595 @@ async function generateChatResponse(message: string, db: D1Database): Promise<st
   return responses[Math.floor(Math.random() * responses.length)];
 }
 
+// 랜덤 번호 생성 (1-45 중 6개)
+function generateRandomNumbers(): number[] {
+  const numbers = new Set<number>();
+  while (numbers.size < 6) {
+    numbers.add(Math.floor(Math.random() * 45) + 1);
+  }
+  return Array.from(numbers).sort((a, b) => a - b);
+}
+
+// =================== 사용자 인증 및 예측저장 API ===================
+
+// 사용자 로그인/회원가입 (간단한 세션 기반)
+app.post('/api/auth/login', async (c) => {
+  try {
+    const { username, email } = await c.req.json();
+    
+    if (!username || username.trim() === '') {
+      return c.json({ success: false, error: '사용자명을 입력해주세요.' }, 400);
+    }
+
+    // 기존 사용자 확인
+    let user;
+    if (email) {
+      const existingUser = await c.env.DB.prepare(
+        'SELECT * FROM users WHERE email = ? OR username = ?'
+      ).bind(email, username).first();
+      
+      if (existingUser) {
+        user = existingUser;
+      } else {
+        // 새 사용자 생성
+        const result = await c.env.DB.prepare(
+          'INSERT INTO users (email, username, subscription_type) VALUES (?, ?, ?)'
+        ).bind(email, username, 'basic').run();
+        
+        user = {
+          id: result.meta.last_row_id,
+          email,
+          username,
+          subscription_type: 'basic'
+        };
+      }
+    } else {
+      // 이메일 없는 경우 (게스트 로그인)
+      const existingUser = await c.env.DB.prepare(
+        'SELECT * FROM users WHERE username = ? AND email IS NULL'
+      ).bind(username).first();
+      
+      if (existingUser) {
+        user = existingUser;
+      } else {
+        const result = await c.env.DB.prepare(
+          'INSERT INTO users (username, subscription_type) VALUES (?, ?)'
+        ).bind(username, 'basic').run();
+        
+        user = {
+          id: result.meta.last_row_id,
+          username,
+          subscription_type: 'basic'
+        };
+      }
+    }
+
+    // 세션 생성
+    const sessionId = crypto.randomUUID();
+    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(); // 30일
+
+    await c.env.DB.prepare(
+      'INSERT INTO user_sessions (session_id, user_id, username, email, expires_at) VALUES (?, ?, ?, ?, ?)'
+    ).bind(sessionId, user.id, user.username, user.email || null, expiresAt).run();
+
+    // 마지막 로그인 시간 업데이트
+    await c.env.DB.prepare(
+      'UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?'
+    ).bind(user.id).run();
+
+    return c.json({
+      success: true,
+      data: {
+        sessionId,
+        user: {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          subscription_type: user.subscription_type
+        }
+      },
+      message: '로그인되었습니다.'
+    });
+
+  } catch (error) {
+    console.error('Login error:', error);
+    return c.json({ success: false, error: '로그인 중 오류가 발생했습니다.' }, 500);
+  }
+});
+
+// 세션 확인
+app.get('/api/auth/session/:sessionId', async (c) => {
+  try {
+    const sessionId = c.req.param('sessionId');
+    
+    const session = await c.env.DB.prepare(
+      'SELECT * FROM user_sessions WHERE session_id = ? AND expires_at > CURRENT_TIMESTAMP'
+    ).bind(sessionId).first();
+
+    if (!session) {
+      return c.json({ success: false, error: '유효하지 않은 세션입니다.' }, 401);
+    }
+
+    return c.json({
+      success: true,
+      data: {
+        user: {
+          id: session.user_id,
+          username: session.username,
+          email: session.email
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Session check error:', error);
+    return c.json({ success: false, error: '세션 확인 중 오류가 발생했습니다.' }, 500);
+  }
+});
+
+// 로그아웃
+app.post('/api/auth/logout', async (c) => {
+  try {
+    const { sessionId } = await c.req.json();
+    
+    if (sessionId) {
+      await c.env.DB.prepare(
+        'DELETE FROM user_sessions WHERE session_id = ?'
+      ).bind(sessionId).run();
+    }
+
+    return c.json({ success: true, message: '로그아웃되었습니다.' });
+
+  } catch (error) {
+    console.error('Logout error:', error);
+    return c.json({ success: false, error: '로그아웃 중 오류가 발생했습니다.' }, 500);
+  }
+});
+
+// 예측 결과 저장
+app.post('/api/predictions/save', async (c) => {
+  try {
+    const { sessionId, prediction_type, predicted_numbers, confidence_score, memo, virtual_round, tags } = await c.req.json();
+    
+    // 세션 확인
+    const session = await c.env.DB.prepare(
+      'SELECT * FROM user_sessions WHERE session_id = ? AND expires_at > CURRENT_TIMESTAMP'
+    ).bind(sessionId).first();
+
+    if (!session) {
+      return c.json({ success: false, error: '로그인이 필요합니다.' }, 401);
+    }
+
+    // 가상회차 번호 생성 (사용자별 자동 증가)
+    let finalVirtualRound = virtual_round;
+    if (!finalVirtualRound) {
+      const lastRound = await c.env.DB.prepare(
+        'SELECT MAX(virtual_round) as max_round FROM saved_predictions WHERE user_id = ?'
+      ).bind(session.user_id).first();
+      
+      finalVirtualRound = (lastRound?.max_round || 0) + 1;
+    }
+
+    // 예측 저장
+    const result = await c.env.DB.prepare(`
+      INSERT INTO saved_predictions 
+      (user_id, session_id, prediction_type, predicted_numbers, confidence_score, memo, virtual_round, tags, is_favorite)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).bind(
+      session.user_id,
+      sessionId,
+      prediction_type,
+      JSON.stringify(predicted_numbers),
+      confidence_score || null,
+      memo || null,
+      finalVirtualRound,
+      JSON.stringify(tags || []),
+      false
+    ).run();
+
+    // 사용자 예측 패턴 업데이트 (자주 사용하는 번호, 알고리즘 등)
+    await updateUserPredictionPatterns(c.env.DB, session.user_id, {
+      prediction_type,
+      predicted_numbers,
+      memo,
+      tags
+    });
+
+    return c.json({
+      success: true,
+      data: {
+        id: result.meta.last_row_id,
+        virtual_round: finalVirtualRound
+      },
+      message: '예측이 저장되었습니다.'
+    });
+
+  } catch (error) {
+    console.error('Save prediction error:', error);
+    return c.json({ success: false, error: '예측 저장 중 오류가 발생했습니다.' }, 500);
+  }
+});
+
+// 저장된 예측 목록 조회
+app.get('/api/predictions/saved/:sessionId', async (c) => {
+  try {
+    const sessionId = c.req.param('sessionId');
+    const page = parseInt(c.req.query('page') || '1');
+    const limit = parseInt(c.req.query('limit') || '10');
+    const offset = (page - 1) * limit;
+    
+    // 세션 확인
+    const session = await c.env.DB.prepare(
+      'SELECT * FROM user_sessions WHERE session_id = ? AND expires_at > CURRENT_TIMESTAMP'
+    ).bind(sessionId).first();
+
+    if (!session) {
+      return c.json({ success: false, error: '로그인이 필요합니다.' }, 401);
+    }
+
+    // 저장된 예측 조회
+    const predictions = await c.env.DB.prepare(`
+      SELECT * FROM saved_predictions 
+      WHERE user_id = ? 
+      ORDER BY created_at DESC 
+      LIMIT ? OFFSET ?
+    `).bind(session.user_id, limit, offset).all();
+
+    // 전체 개수
+    const totalCount = await c.env.DB.prepare(
+      'SELECT COUNT(*) as count FROM saved_predictions WHERE user_id = ?'
+    ).bind(session.user_id).first();
+
+    const formattedPredictions = predictions.results.map((pred: any) => ({
+      ...pred,
+      predicted_numbers: JSON.parse(pred.predicted_numbers),
+      tags: JSON.parse(pred.tags || '[]')
+    }));
+
+    return c.json({
+      success: true,
+      data: {
+        predictions: formattedPredictions,
+        pagination: {
+          page,
+          limit,
+          total: totalCount.count,
+          totalPages: Math.ceil(totalCount.count / limit)
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Get saved predictions error:', error);
+    return c.json({ success: false, error: '저장된 예측 조회 중 오류가 발생했습니다.' }, 500);
+  }
+});
+
+// 저장된 예측 수정
+app.put('/api/predictions/saved/:id', async (c) => {
+  try {
+    const predictionId = c.req.param('id');
+    const { sessionId, memo, tags, is_favorite } = await c.req.json();
+    
+    // 세션 확인
+    const session = await c.env.DB.prepare(
+      'SELECT * FROM user_sessions WHERE session_id = ? AND expires_at > CURRENT_TIMESTAMP'
+    ).bind(sessionId).first();
+
+    if (!session) {
+      return c.json({ success: false, error: '로그인이 필요합니다.' }, 401);
+    }
+
+    // 예측 소유권 확인
+    const prediction = await c.env.DB.prepare(
+      'SELECT * FROM saved_predictions WHERE id = ? AND user_id = ?'
+    ).bind(predictionId, session.user_id).first();
+
+    if (!prediction) {
+      return c.json({ success: false, error: '예측을 찾을 수 없습니다.' }, 404);
+    }
+
+    // 업데이트
+    await c.env.DB.prepare(`
+      UPDATE saved_predictions 
+      SET memo = ?, tags = ?, is_favorite = ?, updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `).bind(
+      memo || null,
+      JSON.stringify(tags || []),
+      is_favorite || false,
+      predictionId
+    ).run();
+
+    return c.json({ success: true, message: '예측이 수정되었습니다.' });
+
+  } catch (error) {
+    console.error('Update prediction error:', error);
+    return c.json({ success: false, error: '예측 수정 중 오류가 발생했습니다.' }, 500);
+  }
+});
+
+// 저장된 예측 삭제
+app.delete('/api/predictions/saved/:id', async (c) => {
+  try {
+    const predictionId = c.req.param('id');
+    const sessionId = c.req.header('X-Session-ID');
+    
+    if (!sessionId) {
+      return c.json({ success: false, error: '세션 정보가 필요합니다.' }, 400);
+    }
+
+    // 세션 확인
+    const session = await c.env.DB.prepare(
+      'SELECT * FROM user_sessions WHERE session_id = ? AND expires_at > CURRENT_TIMESTAMP'
+    ).bind(sessionId).first();
+
+    if (!session) {
+      return c.json({ success: false, error: '로그인이 필요합니다.' }, 401);
+    }
+
+    // 예측 소유권 확인 및 삭제
+    const result = await c.env.DB.prepare(
+      'DELETE FROM saved_predictions WHERE id = ? AND user_id = ?'
+    ).bind(predictionId, session.user_id).run();
+
+    if (result.changes === 0) {
+      return c.json({ success: false, error: '예측을 찾을 수 없습니다.' }, 404);
+    }
+
+    return c.json({ success: true, message: '예측이 삭제되었습니다.' });
+
+  } catch (error) {
+    console.error('Delete prediction error:', error);
+    return c.json({ success: false, error: '예측 삭제 중 오류가 발생했습니다.' }, 500);
+  }
+});
+
+// 개인화 추천 생성
+app.post('/api/recommendations/personalized', async (c) => {
+  try {
+    const { sessionId, based_on_prediction_ids, algorithm_preference, include_favorites_only } = await c.req.json();
+    
+    // 세션 확인
+    const session = await c.env.DB.prepare(
+      'SELECT * FROM user_sessions WHERE session_id = ? AND expires_at > CURRENT_TIMESTAMP'
+    ).bind(sessionId).first();
+
+    if (!session) {
+      return c.json({ success: false, error: '로그인이 필요합니다.' }, 401);
+    }
+
+    // 사용자의 예측 패턴 분석
+    const userPatterns = await getUserPredictionPatterns(c.env.DB, session.user_id);
+    
+    // 기반이 될 예측들 조회
+    let basePredictions;
+    if (based_on_prediction_ids && based_on_prediction_ids.length > 0) {
+      const placeholders = based_on_prediction_ids.map(() => '?').join(',');
+      basePredictions = await c.env.DB.prepare(
+        `SELECT * FROM saved_predictions WHERE id IN (${placeholders}) AND user_id = ?`
+      ).bind(...based_on_prediction_ids, session.user_id).all();
+    } else {
+      // 최근 예측들 또는 즐겨찾기만
+      const whereClause = include_favorites_only ? 'AND is_favorite = 1' : '';
+      basePredictions = await c.env.DB.prepare(`
+        SELECT * FROM saved_predictions 
+        WHERE user_id = ? ${whereClause}
+        ORDER BY created_at DESC 
+        LIMIT 10
+      `).bind(session.user_id).all();
+    }
+
+    if (!basePredictions.results || basePredictions.results.length === 0) {
+      return c.json({ success: false, error: '개인화 추천을 위한 기반 예측이 없습니다.' }, 400);
+    }
+
+    // 개인화 추천 알고리즘 실행
+    const recommendation = await generatePersonalizedRecommendation(
+      basePredictions.results.map((p: any) => ({
+        ...p,
+        predicted_numbers: JSON.parse(p.predicted_numbers)
+      })),
+      userPatterns,
+      algorithm_preference
+    );
+
+    // 추천 결과 저장
+    const result = await c.env.DB.prepare(`
+      INSERT INTO personalized_recommendations 
+      (user_id, based_on_predictions, recommended_numbers, algorithm_used, confidence_score, explanation)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `).bind(
+      session.user_id,
+      JSON.stringify(based_on_prediction_ids || basePredictions.results.map((p: any) => p.id)),
+      JSON.stringify(recommendation.numbers),
+      recommendation.algorithm,
+      recommendation.confidence,
+      recommendation.explanation
+    ).run();
+
+    return c.json({
+      success: true,
+      data: {
+        id: result.meta.last_row_id,
+        ...recommendation,
+        based_on_count: basePredictions.results.length
+      }
+    });
+
+  } catch (error) {
+    console.error('Personalized recommendation error:', error);
+    return c.json({ success: false, error: '개인화 추천 생성 중 오류가 발생했습니다.' }, 500);
+  }
+});
+
+// 사용자 예측 패턴 업데이트 함수
+async function updateUserPredictionPatterns(db: D1Database, userId: number, predictionData: any) {
+  try {
+    // 자주 사용하는 번호 패턴 업데이트
+    for (const number of predictionData.predicted_numbers) {
+      const existing = await db.prepare(
+        'SELECT * FROM user_prediction_patterns WHERE user_id = ? AND pattern_type = ? AND pattern_data LIKE ?'
+      ).bind(userId, 'frequent_numbers', `%"number":${number}%`).first();
+
+      if (existing) {
+        await db.prepare(
+          'UPDATE user_prediction_patterns SET frequency = frequency + 1, last_updated = CURRENT_TIMESTAMP WHERE id = ?'
+        ).bind(existing.id).run();
+      } else {
+        await db.prepare(
+          'INSERT INTO user_prediction_patterns (user_id, pattern_type, pattern_data, frequency) VALUES (?, ?, ?, ?)'
+        ).bind(userId, 'frequent_numbers', JSON.stringify({ number }), 1).run();
+      }
+    }
+
+    // 알고리즘 선호도 패턴 업데이트
+    const algorithmPattern = await db.prepare(
+      'SELECT * FROM user_prediction_patterns WHERE user_id = ? AND pattern_type = ? AND pattern_data LIKE ?'
+    ).bind(userId, 'algorithm_preference', `%"algorithm":"${predictionData.prediction_type}"%`).first();
+
+    if (algorithmPattern) {
+      await db.prepare(
+        'UPDATE user_prediction_patterns SET frequency = frequency + 1, last_updated = CURRENT_TIMESTAMP WHERE id = ?'
+      ).bind(algorithmPattern.id).run();
+    } else {
+      await db.prepare(
+        'INSERT INTO user_prediction_patterns (user_id, pattern_type, pattern_data, frequency) VALUES (?, ?, ?, ?)'
+      ).bind(userId, 'algorithm_preference', JSON.stringify({ algorithm: predictionData.prediction_type }), 1).run();
+    }
+
+  } catch (error) {
+    console.error('Update user patterns error:', error);
+  }
+}
+
+// 사용자 예측 패턴 조회 함수
+async function getUserPredictionPatterns(db: D1Database, userId: number) {
+  try {
+    const patterns = await db.prepare(
+      'SELECT * FROM user_prediction_patterns WHERE user_id = ? ORDER BY frequency DESC'
+    ).bind(userId).all();
+
+    return patterns.results.map((pattern: any) => ({
+      ...pattern,
+      pattern_data: JSON.parse(pattern.pattern_data)
+    }));
+  } catch (error) {
+    console.error('Get user patterns error:', error);
+    return [];
+  }
+}
+
+// 개인화 추천 알고리즘 함수
+async function generatePersonalizedRecommendation(
+  basePredictions: any[],
+  userPatterns: any[],
+  algorithmPreference?: string[]
+): Promise<NumberRecommendation> {
+  try {
+    // 사용자의 자주 사용하는 번호들 추출
+    const frequentNumbers = userPatterns
+      .filter(p => p.pattern_type === 'frequent_numbers')
+      .sort((a, b) => b.frequency - a.frequency)
+      .slice(0, 20)
+      .map(p => p.pattern_data.number);
+
+    // 기반 예측들에서 번호 빈도 분석
+    const numberFrequency: Record<number, number> = {};
+    basePredictions.forEach(pred => {
+      pred.predicted_numbers.forEach((num: number) => {
+        numberFrequency[num] = (numberFrequency[num] || 0) + 1;
+      });
+    });
+
+    // 가중치 계산 (사용자 패턴 + 기반 예측 빈도)
+    const numberWeights: Record<number, number> = {};
+    for (let i = 1; i <= 45; i++) {
+      const patternWeight = frequentNumbers.includes(i) ? 0.6 : 0.1;
+      const frequencyWeight = (numberFrequency[i] || 0) / basePredictions.length;
+      const randomWeight = Math.random() * 0.3;
+      
+      numberWeights[i] = patternWeight + frequencyWeight + randomWeight;
+    }
+
+    // 가중치 기반 번호 선택
+    const sortedNumbers = Object.entries(numberWeights)
+      .sort(([,a], [,b]) => b - a)
+      .slice(0, 15)
+      .map(([num]) => parseInt(num));
+
+    // 최종 6개 번호 선택 (다양성 확보)
+    const selectedNumbers: number[] = [];
+    
+    // 상위 3개는 가중치 순으로
+    selectedNumbers.push(...sortedNumbers.slice(0, 3));
+    
+    // 나머지 3개는 랜덤하게 선택하되 중복 방지
+    while (selectedNumbers.length < 6) {
+      const candidates = sortedNumbers.filter(num => !selectedNumbers.includes(num));
+      if (candidates.length === 0) break;
+      
+      const randomIndex = Math.floor(Math.random() * Math.min(candidates.length, 8));
+      selectedNumbers.push(candidates[randomIndex]);
+    }
+
+    // 부족한 번호는 완전 랜덤으로 채움
+    while (selectedNumbers.length < 6) {
+      const randomNum = Math.floor(Math.random() * 45) + 1;
+      if (!selectedNumbers.includes(randomNum)) {
+        selectedNumbers.push(randomNum);
+      }
+    }
+
+    selectedNumbers.sort((a, b) => a - b);
+
+    const confidence = Math.min(0.95, 0.5 + (basePredictions.length * 0.05) + (frequentNumbers.length * 0.02));
+
+    return {
+      numbers: selectedNumbers,
+      algorithm: 'personalized_rag' as any,
+      confidence,
+      explanation: `${basePredictions.length}개의 저장된 예측과 사용자 패턴을 분석하여 생성된 개인화 추천입니다.`,
+      reason: `자주 선택한 번호(${frequentNumbers.slice(0, 3).join(', ')}) 포함하여 ${(confidence * 100).toFixed(1)}% 신뢰도로 추천됩니다.`
+    };
+
+  } catch (error) {
+    console.error('Personalized recommendation generation error:', error);
+    // 오류 시 기본 추천 반환
+    return {
+      numbers: generateRandomNumbers(),
+      algorithm: 'fallback_random' as any,
+      confidence: 0.3,
+      explanation: '개인화 추천 생성 중 오류가 발생하여 랜덤 추천을 제공합니다.',
+      reason: '기본 랜덤 추천입니다.'
+    };
+  }
+}
+
+// =================== 8가지 통계 분석 API ===================
+
+// 통계 분석 실행 API
+app.post('/api/analysis', async (c) => {
+  try {
+    const { type } = await c.req.json();
+    
+    if (!type) {
+      return c.json({ success: false, error: '분석 타입이 필요합니다.' }, 400);
+    }
+
+    const result = await performStatisticalAnalysis(type, c.env.DB);
+    
+    return c.json({
+      success: true,
+      data: result
+    });
+
+  } catch (error) {
+    console.error('Statistical analysis error:', error);
+    return c.json({ success: false, error: '통계 분석 중 오류가 발생했습니다.' }, 500);
+  }
+});
+
 // 통계 분석 수행 함수
 async function performStatisticalAnalysis(type: string, db: D1Database): Promise<StatisticsResult> {
   switch (type) {
@@ -601,31 +1949,54 @@ async function performStatisticalAnalysis(type: string, db: D1Database): Promise
       return await hotColdAnalysis(db);
     case 'pattern_analysis':
       return await patternAnalysis(db);
+    case 'correlation_analysis':
+      return await correlationAnalysis(db);
+    case 'trend_analysis':
+      return await trendAnalysis(db);
+    case 'distribution_analysis':
+      return await distributionAnalysis(db);
+    case 'sequence_analysis':
+      return await sequenceAnalysis(db);
+    case 'probability_analysis':
+      return await probabilityAnalysis(db);
     default:
       return {
         type: type as any,
         data: {},
-        summary: '해당 분석은 아직 구현되지 않았습니다.'
+        summary: '해당 분석은 아직 구현되지 않았습니다.',
+        recommended_numbers: [],
+        explanation: '분석 타입을 확인해주세요.'
       };
   }
 }
 
-// 빈도 분석
+// 1. 빈도 분석
 async function frequencyAnalysis(db: D1Database): Promise<StatisticsResult> {
   try {
-    const query = `
-      SELECT number, COUNT(*) as frequency FROM (
-        SELECT number1 as number FROM lotto_draws UNION ALL
-        SELECT number2 FROM lotto_draws UNION ALL
-        SELECT number3 FROM lotto_draws UNION ALL
-        SELECT number4 FROM lotto_draws UNION ALL
-        SELECT number5 FROM lotto_draws UNION ALL
-        SELECT number6 FROM lotto_draws
-      ) GROUP BY number ORDER BY number
-    `;
+    // 각 번호의 빈도를 계산 (더 간단한 방법)
+    const frequencies: { [key: number]: number } = {};
     
-    const results = await db.prepare(query).all();
-    const data = results.results.map((r: any) => ({ number: r.number, frequency: r.frequency }));
+    // 모든 당첨 번호 가져오기
+    const draws = await db.prepare(`
+      SELECT number1, number2, number3, number4, number5, number6 
+      FROM lotto_draws 
+      ORDER BY draw_number DESC
+    `).all();
+
+    // 각 번호의 빈도 계산
+    draws.results.forEach((draw: any) => {
+      [draw.number1, draw.number2, draw.number3, draw.number4, draw.number5, draw.number6].forEach((num: number) => {
+        frequencies[num] = (frequencies[num] || 0) + 1;
+      });
+    });
+
+    // 데이터 정렬
+    const data = Object.entries(frequencies)
+      .map(([num, freq]) => ({ number: parseInt(num), frequency: freq }))
+      .sort((a, b) => b.frequency - a.frequency);
+    
+    // 가장 자주 나온 상위 6개 번호를 추천
+    const topNumbers = data.slice(0, 6).map((d: any) => d.number).sort((a: number, b: number) => a - b);
     
     const chartConfig = {
       type: 'bar',
@@ -643,177 +2014,740 @@ async function frequencyAnalysis(db: D1Database): Promise<StatisticsResult> {
         responsive: true,
         scales: {
           y: {
-            beginAtZero: true
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: '출현 횟수'
+            }
+          },
+          x: {
+            title: {
+              display: true,
+              text: '번호'
+            }
           }
         }
       }
     };
-    
-    const topNumbers = data
-      .sort((a: any, b: any) => b.frequency - a.frequency)
-      .slice(0, 10)
-      .map((d: any) => `${d.number}번(${d.frequency}회)`)
-      .join(', ');
-    
+
     return {
       type: 'frequency_analysis',
-      data: data,
+      data: { frequencies: data, chart: chartConfig },
       visualization: JSON.stringify(chartConfig),
-      summary: `번호별 출현 빈도 분석 결과:\\n가장 자주 나온 번호 TOP 10: ${topNumbers}`
+      summary: `가장 자주 나온 번호: ${data.slice(0, 5).map((d: any) => `${d.number}번(${d.frequency}회)`).join(', ')}`,
+      recommended_numbers: topNumbers,
+      explanation: '과거 데이터에서 가장 자주 출현한 번호들을 기반으로 한 추천입니다. 통계적으로 자주 나온 번호가 다시 나올 가능성을 고려한 분석입니다.'
     };
+    
   } catch (error) {
+    console.error('Frequency analysis error:', error);
     return {
       type: 'frequency_analysis',
       data: {},
-      summary: '빈도 분석 중 오류가 발생했습니다.'
+      summary: '빈도 분석 중 오류가 발생했습니다.',
+      recommended_numbers: [],
+      explanation: '데이터를 불러오는데 문제가 발생했습니다.'
     };
   }
 }
 
-// 핫/콜드 번호 분석
+// 2. 핫/콜드 번호 분석
 async function hotColdAnalysis(db: D1Database): Promise<StatisticsResult> {
   try {
-    const recentDraws = await db.prepare(`
-      SELECT * FROM lotto_draws ORDER BY draw_number DESC LIMIT 20
+    // 최근 20회차 데이터 분석
+    const draws = await db.prepare(`
+      SELECT number1, number2, number3, number4, number5, number6 
+      FROM lotto_draws 
+      ORDER BY draw_number DESC 
+      LIMIT 20
     `).all();
+
+    const recentFrequencies: { [key: number]: number } = {};
     
-    const numberFrequency: Record<number, number> = {};
-    
-    recentDraws.results.forEach((draw: any) => {
-      [draw.number1, draw.number2, draw.number3, draw.number4, draw.number5, draw.number6].forEach(num => {
-        numberFrequency[num] = (numberFrequency[num] || 0) + 1;
+    // 최근 20회차에서 각 번호의 빈도 계산
+    draws.results.forEach((draw: any) => {
+      [draw.number1, draw.number2, draw.number3, draw.number4, draw.number5, draw.number6].forEach((num: number) => {
+        recentFrequencies[num] = (recentFrequencies[num] || 0) + 1;
       });
     });
-    
-    const sortedNumbers = Object.entries(numberFrequency)
-      .map(([num, freq]) => ({ number: parseInt(num), frequency: freq }))
-      .sort((a, b) => b.frequency - a.frequency);
-    
-    const hotNumbers = sortedNumbers.slice(0, 10);
+
+    // 핫/콜드 번호 분류
+    const hotNumbers = [];
     const coldNumbers = [];
     
-    // 최근 20회차에 없는 번호들을 콜드 번호로 분류
     for (let i = 1; i <= 45; i++) {
-      if (!numberFrequency[i]) {
-        coldNumbers.push({ number: i, frequency: 0 });
+      const freq = recentFrequencies[i] || 0;
+      if (freq >= 3) {
+        hotNumbers.push({ number: i, recent_frequency: freq });
+      } else if (freq <= 1) {
+        coldNumbers.push({ number: i, recent_frequency: freq });
       }
     }
     
+    // 콜드 번호 정렬
+    hotNumbers.sort((a, b) => b.recent_frequency - a.recent_frequency);
+    coldNumbers.sort((a, b) => a.recent_frequency - b.recent_frequency);
+
+    // 핫번호 3개 + 콜드번호 3개 조합 추천
+    const hotPicks = hotNumbers.slice(0, 3).map((h: any) => h.number);
+    const coldPicks = coldNumbers.slice(0, 3).map((c: any) => c.number);
+    const recommended = [...hotPicks, ...coldPicks].sort((a: number, b: number) => a - b);
+
     return {
       type: 'hot_cold_numbers',
       data: { hot: hotNumbers, cold: coldNumbers },
-      summary: `최근 20회차 핫/콜드 분석:\\n🔥 핫 번호: ${hotNumbers.map(n => n.number).join(', ')}\\n🧊 콜드 번호: ${coldNumbers.map(n => n.number).slice(0, 10).join(', ')}`
+      summary: `핫 번호(자주 나온 번호): ${hotNumbers.slice(0, 5).map((h: any) => `${h.number}번`).join(', ')} | 콜드 번호(적게 나온 번호): ${coldNumbers.slice(0, 5).map((c: any) => `${c.number}번`).join(', ')}`,
+      recommended_numbers: recommended,
+      explanation: '최근 20회차 데이터를 분석하여 자주 나온 핫번호와 적게 나온 콜드번호를 균형있게 조합한 추천입니다. 핫번호의 지속성과 콜드번호의 반등 가능성을 동시에 고려합니다.'
     };
+    
   } catch (error) {
+    console.error('Hot/Cold analysis error:', error);
     return {
       type: 'hot_cold_numbers',
       data: {},
-      summary: '핫/콜드 분석 중 오류가 발생했습니다.'
+      summary: '핫/콜드 분석 중 오류가 발생했습니다.',
+      recommended_numbers: [],
+      explanation: '데이터 분석에 문제가 발생했습니다.'
     };
   }
 }
 
-// 패턴 분석
+// 3. 패턴 분석 (홀/짝, 고/저 분석)
 async function patternAnalysis(db: D1Database): Promise<StatisticsResult> {
   try {
-    const recentDraws = await db.prepare(`
-      SELECT * FROM lotto_draws ORDER BY draw_number DESC LIMIT 10
+    const draws = await db.prepare(`
+      SELECT number1, number2, number3, number4, number5, number6 
+      FROM lotto_draws 
+      ORDER BY draw_number DESC 
+      LIMIT 50
     `).all();
-    
+
     let evenCount = 0, oddCount = 0;
-    let lowCount = 0, highCount = 0; // 1-22 vs 23-45
-    
-    recentDraws.results.forEach((draw: any) => {
-      [draw.number1, draw.number2, draw.number3, draw.number4, draw.number5, draw.number6].forEach(num => {
-        if (num % 2 === 0) evenCount++;
-        else oddCount++;
-        
-        if (num <= 22) lowCount++;
-        else highCount++;
+    let lowCount = 0, highCount = 0; // 1-22: 저구간, 23-45: 고구간
+    let consecutiveCount = 0;
+    let totalNumbers = 0;
+
+    draws.results.forEach((draw: any) => {
+      const numbers = [draw.number1, draw.number2, draw.number3, draw.number4, draw.number5, draw.number6];
+      totalNumbers += 6;
+      
+      numbers.forEach((num: number) => {
+        if (num % 2 === 0) evenCount++; else oddCount++;
+        if (num <= 22) lowCount++; else highCount++;
       });
+
+      // 연속번호 검사
+      const sorted = numbers.sort((a: number, b: number) => a - b);
+      for (let i = 0; i < sorted.length - 1; i++) {
+        if (sorted[i + 1] - sorted[i] === 1) {
+          consecutiveCount++;
+          break;
+        }
+      }
     });
+
+    const evenRatio = (evenCount / totalNumbers) * 100;
+    const oddRatio = (oddCount / totalNumbers) * 100;
+    const lowRatio = (lowCount / totalNumbers) * 100;
+    const highRatio = (highCount / totalNumbers) * 100;
+    const consecutiveRatio = (consecutiveCount / draws.results.length) * 100;
+
+    // 균형있는 패턴으로 추천 생성
+    const recommended = [];
     
-    const total = evenCount + oddCount;
-    const evenRatio = (evenCount / total * 100).toFixed(1);
-    const oddRatio = (oddCount / total * 100).toFixed(1);
-    const lowRatio = (lowCount / total * 100).toFixed(1);
-    const highRatio = (highCount / total * 100).toFixed(1);
+    // 홀짝 균형 (3:3 또는 4:2)
+    const evenTarget = Math.random() > 0.5 ? 3 : 2;
+    const oddTarget = 6 - evenTarget;
     
+    // 저고 균형 (3:3 또는 4:2)
+    const lowTarget = Math.random() > 0.5 ? 3 : 2;
+    const highTarget = 6 - lowTarget;
+
+    // 균형있는 번호 선택
+    let evenSelected = 0, oddSelected = 0;
+    let lowSelected = 0, highSelected = 0;
+    
+    while (recommended.length < 6) {
+      const num = Math.floor(Math.random() * 45) + 1;
+      if (recommended.includes(num)) continue;
+      
+      const isEven = num % 2 === 0;
+      const isLow = num <= 22;
+      
+      // 조건 체크
+      if (isEven && evenSelected < evenTarget) {
+        if (isLow && lowSelected < lowTarget) {
+          recommended.push(num);
+          evenSelected++;
+          lowSelected++;
+        } else if (!isLow && highSelected < highTarget) {
+          recommended.push(num);
+          evenSelected++;
+          highSelected++;
+        }
+      } else if (!isEven && oddSelected < oddTarget) {
+        if (isLow && lowSelected < lowTarget) {
+          recommended.push(num);
+          oddSelected++;
+          lowSelected++;
+        } else if (!isLow && highSelected < highTarget) {
+          recommended.push(num);
+          oddSelected++;
+          highSelected++;
+        }
+      }
+    }
+
+    recommended.sort((a: number, b: number) => a - b);
+
     return {
       type: 'pattern_analysis',
       data: {
-        evenOdd: { even: evenCount, odd: oddCount },
-        lowHigh: { low: lowCount, high: highCount }
+        evenRatio,
+        oddRatio,
+        lowRatio,
+        highRatio,
+        consecutiveRatio
       },
-      summary: `최근 10회차 패턴 분석:\\n짝수/홀수: ${evenRatio}% / ${oddRatio}%\\n저구간/고구간: ${lowRatio}% / ${highRatio}%`
+      summary: `홀짝 비율 - 짝수: ${evenRatio.toFixed(1)}%, 홀수: ${oddRatio.toFixed(1)}% | 고저 비율 - 저구간(1-22): ${lowRatio.toFixed(1)}%, 고구간(23-45): ${highRatio.toFixed(1)}% | 연속번호 출현: ${consecutiveRatio.toFixed(1)}%`,
+      recommended_numbers: recommended,
+      explanation: `최근 50회차 패턴을 분석하여 홀짝과 고저구간의 균형을 고려한 추천입니다. 일반적으로 홀짝은 3:3 또는 4:2, 고저구간도 비슷한 비율로 나타나는 경향을 반영했습니다.`
     };
+    
   } catch (error) {
+    console.error('Pattern analysis error:', error);
     return {
       type: 'pattern_analysis',
       data: {},
-      summary: '패턴 분석 중 오류가 발생했습니다.'
+      summary: '패턴 분석 중 오류가 발생했습니다.',
+      recommended_numbers: [],
+      explanation: '패턴 데이터 분석에 문제가 발생했습니다.'
     };
   }
 }
 
-// AI 예측 생성 함수
-async function generateAIPrediction(algorithm: string, db: D1Database): Promise<NumberRecommendation> {
-  // 실제 AI 알고리즘 대신 시뮬레이션
-  const numbers = generateRandomNumbers();
-  const confidence = Math.random() * 0.3 + 0.5; // 0.5-0.8
-  
-  const algorithmNames: Record<string, string> = {
-    'bayesian_inference': '베이지안 추론',
-    'neural_network': '신경망',
-    'frequency_analysis': '빈도 분석',
-    'pattern_recognition': '패턴 인식',
-    'monte_carlo': '몬테카를로',
-    'markov_chain': '마르코프 체인',
-    'genetic_algorithm': '유전 알고리즘',
-    'clustering_analysis': '클러스터링',
-    'regression_analysis': '회귀 분석',
-    'ensemble_method': '앙상블'
-  };
-  
-  const explanations: Record<string, string> = {
-    'bayesian_inference': '과거 데이터를 기반으로 베이지안 확률 모델을 적용하여 예측했습니다.',
-    'neural_network': '딥러닝 신경망 모델로 패턴을 학습하여 예측했습니다.',
-    'frequency_analysis': '출현 빈도 통계를 기반으로 확률적 예측을 수행했습니다.',
-    'pattern_recognition': '과거 당첨 패턴을 분석하여 유사한 패턴을 찾아 예측했습니다.',
-    'monte_carlo': '몬테카를로 시뮬레이션을 통해 확률적 예측을 수행했습니다.',
-    'markov_chain': '마르코프 체인 모델로 번호 간 연관성을 분석하여 예측했습니다.',
-    'genetic_algorithm': '유전 알고리즘으로 최적의 번호 조합을 진화시켜 도출했습니다.',
-    'clustering_analysis': '클러스터링으로 유사한 패턴을 그룹화하여 예측했습니다.',
-    'regression_analysis': '회귀 분석으로 번호 출현 트렌드를 분석하여 예측했습니다.',
-    'ensemble_method': '여러 AI 모델의 결과를 종합하여 최종 예측했습니다.'
-  };
-  
-  // 예측 결과를 DB에 저장
+// 4. 상관관계 분석
+async function correlationAnalysis(db: D1Database): Promise<StatisticsResult> {
   try {
-    await db.prepare(`
-      INSERT INTO ai_predictions (prediction_type, predicted_numbers, confidence_score)
-      VALUES (?, ?, ?)
-    `).bind(algorithm, JSON.stringify(numbers), confidence).run();
+    // 번호들이 함께 나오는 빈도 분석
+    const query = `
+      SELECT 
+        d1.number1, d1.number2, d1.number3, d1.number4, d1.number5, d1.number6
+      FROM lotto_draws d1
+      ORDER BY draw_number DESC
+      LIMIT 100
+    `;
+    
+    const draws = await db.prepare(query).all();
+    const correlationMap: { [key: string]: number } = {};
+    
+    // 번호 쌍들의 동반 출현 빈도 계산
+    draws.results.forEach((draw: any) => {
+      const numbers = [draw.number1, draw.number2, draw.number3, draw.number4, draw.number5, draw.number6];
+      
+      for (let i = 0; i < numbers.length; i++) {
+        for (let j = i + 1; j < numbers.length; j++) {
+          const pair = [numbers[i], numbers[j]].sort().join(',');
+          correlationMap[pair] = (correlationMap[pair] || 0) + 1;
+        }
+      }
+    });
+
+    // 가장 자주 함께 나온 번호 쌍들 찾기
+    const strongCorrelations = Object.entries(correlationMap)
+      .filter(([pair, count]) => count >= 3)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 10);
+
+    // 상관관계가 높은 번호들로 추천 생성
+    const recommendedSet = new Set<number>();
+    
+    strongCorrelations.slice(0, 3).forEach(([pair, count]) => {
+      const [num1, num2] = pair.split(',').map(Number);
+      recommendedSet.add(num1);
+      recommendedSet.add(num2);
+    });
+
+    // 6개가 안 되면 랜덤으로 채우기
+    while (recommendedSet.size < 6) {
+      const randomNum = Math.floor(Math.random() * 45) + 1;
+      recommendedSet.add(randomNum);
+    }
+
+    const recommended = Array.from(recommendedSet).slice(0, 6).sort((a: number, b: number) => a - b);
+
+    return {
+      type: 'correlation_analysis',
+      data: { correlations: strongCorrelations },
+      summary: `강한 상관관계를 보이는 번호 쌍: ${strongCorrelations.slice(0, 5).map(([pair, count]) => `(${pair.replace(',', ', ')}: ${count}회)`).join(', ')}`,
+      recommended_numbers: recommended,
+      explanation: '과거 100회차 데이터에서 자주 함께 출현한 번호들의 상관관계를 분석하여 추천했습니다. 특정 번호들이 함께 나오는 패턴을 고려한 분석입니다.'
+    };
+    
   } catch (error) {
-    console.error('Failed to save prediction:', error);
+    console.error('Correlation analysis error:', error);
+    return {
+      type: 'correlation_analysis',
+      data: {},
+      summary: '상관관계 분석 중 오류가 발생했습니다.',
+      recommended_numbers: [],
+      explanation: '상관관계 데이터 분석에 문제가 발생했습니다.'
+    };
   }
-  
-  return {
-    numbers,
-    algorithm: algorithm as any,
-    confidence,
-    explanation: explanations[algorithm] || '알 수 없는 알고리즘입니다.',
-    reason: `${(confidence * 100).toFixed(1)}% 신뢰도로 예측된 번호입니다.`
-  };
 }
 
-// 랜덤 번호 생성 (1-45 중 6개)
-function generateRandomNumbers(): number[] {
-  const numbers = new Set<number>();
-  while (numbers.size < 6) {
-    numbers.add(Math.floor(Math.random() * 45) + 1);
+// 5. 트렌드 분석
+async function trendAnalysis(db: D1Database): Promise<StatisticsResult> {
+  try {
+    // 최근 30회차의 트렌드 분석
+    const query = `
+      SELECT draw_number, number1, number2, number3, number4, number5, number6 
+      FROM lotto_draws 
+      ORDER BY draw_number DESC 
+      LIMIT 30
+    `;
+    
+    const draws = await db.prepare(query).all();
+    const trendData: { [key: number]: number[] } = {};
+
+    // 각 번호의 최근 출현 트렌드 추적
+    for (let num = 1; num <= 45; num++) {
+      trendData[num] = [];
+    }
+
+    draws.results.reverse().forEach((draw: any, index: number) => {
+      const numbers = [draw.number1, draw.number2, draw.number3, draw.number4, draw.number5, draw.number6];
+      
+      for (let num = 1; num <= 45; num++) {
+        trendData[num].push(numbers.includes(num) ? 1 : 0);
+      }
+    });
+
+    // 상승 트렌드 번호들 찾기 (최근에 출현이 증가하는 번호)
+    const trendingUp: { number: number; score: number }[] = [];
+    
+    Object.entries(trendData).forEach(([num, appearances]) => {
+      const recent10 = appearances.slice(-10).reduce((a, b) => a + b, 0);
+      const previous10 = appearances.slice(-20, -10).reduce((a, b) => a + b, 0);
+      const trend = recent10 - previous10;
+      
+      if (trend > 0) {
+        trendingUp.push({ number: parseInt(num), score: trend });
+      }
+    });
+
+    trendingUp.sort((a, b) => b.score - a.score);
+    
+    // 상승 트렌드 번호 중 6개 선택 + 약간의 랜덤성
+    const recommended = [];
+    const topTrending = trendingUp.slice(0, 4).map(t => t.number);
+    recommended.push(...topTrending);
+    
+    // 나머지 2개는 중간 트렌드에서 선택
+    while (recommended.length < 6) {
+      const randomTrend = trendingUp[Math.floor(Math.random() * Math.min(trendingUp.length, 15))];
+      if (randomTrend && !recommended.includes(randomTrend.number)) {
+        recommended.push(randomTrend.number);
+      } else {
+        // 트렌드 데이터가 부족하면 랜덤
+        const randomNum = Math.floor(Math.random() * 45) + 1;
+        if (!recommended.includes(randomNum)) {
+          recommended.push(randomNum);
+        }
+      }
+    }
+
+    recommended.sort((a: number, b: number) => a - b);
+
+    return {
+      type: 'trend_analysis',
+      data: { trending: trendingUp },
+      summary: `상승 트렌드 번호: ${trendingUp.slice(0, 5).map(t => `${t.number}번(+${t.score})`).join(', ')}`,
+      recommended_numbers: recommended,
+      explanation: '최근 30회차 데이터를 분석하여 출현 빈도가 증가하는 상승 트렌드를 보이는 번호들을 선별했습니다. 최근 10회차와 이전 10회차를 비교하여 상승세를 파악합니다.'
+    };
+    
+  } catch (error) {
+    console.error('Trend analysis error:', error);
+    return {
+      type: 'trend_analysis',
+      data: {},
+      summary: '트렌드 분석 중 오류가 발생했습니다.',
+      recommended_numbers: [],
+      explanation: '트렌드 데이터 분석에 문제가 발생했습니다.'
+    };
   }
-  return Array.from(numbers).sort((a, b) => a - b);
 }
+
+// 6. 분포 분석
+async function distributionAnalysis(db: D1Database): Promise<StatisticsResult> {
+  try {
+    // 구간별 분포 분석 (1-9, 10-18, 19-27, 28-36, 37-45)
+    const query = `
+      SELECT number1, number2, number3, number4, number5, number6 
+      FROM lotto_draws 
+      ORDER BY draw_number DESC 
+      LIMIT 50
+    `;
+    
+    const draws = await db.prepare(query).all();
+    const distribution = {
+      zone1: 0, // 1-9
+      zone2: 0, // 10-18
+      zone3: 0, // 19-27
+      zone4: 0, // 28-36
+      zone5: 0  // 37-45
+    };
+
+    draws.results.forEach((draw: any) => {
+      const numbers = [draw.number1, draw.number2, draw.number3, draw.number4, draw.number5, draw.number6];
+      
+      numbers.forEach((num: number) => {
+        if (num <= 9) distribution.zone1++;
+        else if (num <= 18) distribution.zone2++;
+        else if (num <= 27) distribution.zone3++;
+        else if (num <= 36) distribution.zone4++;
+        else distribution.zone5++;
+      });
+    });
+
+    const total = Object.values(distribution).reduce((a, b) => a + b, 0);
+    const ratios = Object.entries(distribution).map(([zone, count]) => ({
+      zone,
+      count,
+      ratio: (count / total) * 100
+    }));
+
+    // 균형잡힌 분포로 추천 생성
+    const recommended = [];
+    const targetPerZone = { zone1: 1, zone2: 1, zone3: 1, zone4: 1, zone5: 2 }; // 5구간에서 각각 1-2개씩
+    
+    Object.entries(targetPerZone).forEach(([zone, target]) => {
+      const zoneNum = parseInt(zone.replace('zone', ''));
+      const min = (zoneNum - 1) * 9 + 1;
+      const max = zoneNum * 9;
+      
+      for (let i = 0; i < target; i++) {
+        let attempts = 0;
+        while (attempts < 20) { // 무한루프 방지
+          const num = Math.floor(Math.random() * (max - min + 1)) + min;
+          if (num <= 45 && !recommended.includes(num)) {
+            recommended.push(num);
+            break;
+          }
+          attempts++;
+        }
+      }
+    });
+
+    // 6개가 안 되면 채우기
+    while (recommended.length < 6) {
+      const num = Math.floor(Math.random() * 45) + 1;
+      if (!recommended.includes(num)) {
+        recommended.push(num);
+      }
+    }
+
+    recommended.sort((a: number, b: number) => a - b);
+
+    return {
+      type: 'distribution_analysis',
+      data: { distribution: ratios },
+      summary: `구간별 분포 - 1-9구간: ${ratios[0].ratio.toFixed(1)}%, 10-18구간: ${ratios[1].ratio.toFixed(1)}%, 19-27구간: ${ratios[2].ratio.toFixed(1)}%, 28-36구간: ${ratios[3].ratio.toFixed(1)}%, 37-45구간: ${ratios[4].ratio.toFixed(1)}%`,
+      recommended_numbers: recommended,
+      explanation: '번호를 5개 구간으로 나누어 분포를 분석하고, 각 구간에서 균형있게 선택하여 추천했습니다. 일반적으로 모든 구간에서 골고루 번호가 나오는 패턴을 고려합니다.'
+    };
+    
+  } catch (error) {
+    console.error('Distribution analysis error:', error);
+    return {
+      type: 'distribution_analysis',
+      data: {},
+      summary: '분포 분석 중 오류가 발생했습니다.',
+      recommended_numbers: [],
+      explanation: '분포 데이터 분석에 문제가 발생했습니다.'
+    };
+  }
+}
+
+// 7. 연속 분석
+async function sequenceAnalysis(db: D1Database): Promise<StatisticsResult> {
+  try {
+    const query = `
+      SELECT number1, number2, number3, number4, number5, number6 
+      FROM lotto_draws 
+      ORDER BY draw_number DESC 
+      LIMIT 100
+    `;
+    
+    const draws = await db.prepare(query).all();
+    let consecutiveCount = 0;
+    let twoConsecutive = 0;
+    let threeOrMore = 0;
+    const consecutiveGaps = [];
+
+    draws.results.forEach((draw: any) => {
+      const numbers = [draw.number1, draw.number2, draw.number3, draw.number4, draw.number5, draw.number6]
+        .sort((a: number, b: number) => a - b);
+      
+      let currentSequence = 1;
+      let maxSequence = 1;
+      
+      for (let i = 1; i < numbers.length; i++) {
+        if (numbers[i] - numbers[i-1] === 1) {
+          currentSequence++;
+          maxSequence = Math.max(maxSequence, currentSequence);
+        } else {
+          if (currentSequence >= 2) {
+            consecutiveGaps.push(currentSequence);
+          }
+          currentSequence = 1;
+        }
+      }
+      
+      if (currentSequence >= 2) {
+        consecutiveGaps.push(currentSequence);
+      }
+
+      if (maxSequence >= 2) {
+        consecutiveCount++;
+        if (maxSequence === 2) twoConsecutive++;
+        else if (maxSequence >= 3) threeOrMore++;
+      }
+    });
+
+    const consecutiveRate = (consecutiveCount / draws.results.length) * 100;
+    
+    // 연속번호 패턴을 고려한 추천
+    const recommended = [];
+    
+    // 70% 확률로 연속번호 1-2개 포함
+    if (Math.random() < 0.7) {
+      const startNum = Math.floor(Math.random() * 44) + 1; // 1-44 중 시작
+      recommended.push(startNum);
+      if (Math.random() < 0.5 && startNum < 45) { // 50% 확률로 하나 더 연속
+        recommended.push(startNum + 1);
+      }
+    }
+    
+    // 나머지는 비연속으로 채우기
+    while (recommended.length < 6) {
+      const num = Math.floor(Math.random() * 45) + 1;
+      // 기존 번호들과 연속되지 않는 번호 선택
+      const isConsecutive = recommended.some(existing => Math.abs(existing - num) === 1);
+      if (!recommended.includes(num) && !isConsecutive) {
+        recommended.push(num);
+      } else if (!recommended.includes(num)) {
+        // 연속이어도 배열이 작으면 포함
+        if (recommended.length < 4) {
+          recommended.push(num);
+        }
+      }
+      
+      // 무한루프 방지
+      if (recommended.length < 6 && recommended.length > 0) {
+        const attempts = 50;
+        for (let i = 0; i < attempts && recommended.length < 6; i++) {
+          const randomNum = Math.floor(Math.random() * 45) + 1;
+          if (!recommended.includes(randomNum)) {
+            recommended.push(randomNum);
+          }
+        }
+        break;
+      }
+    }
+
+    recommended.sort((a: number, b: number) => a - b);
+
+    return {
+      type: 'sequence_analysis',
+      data: { 
+        consecutiveRate, 
+        twoConsecutive, 
+        threeOrMore,
+        patterns: consecutiveGaps
+      },
+      summary: `연속번호 출현율: ${consecutiveRate.toFixed(1)}% (2개 연속: ${twoConsecutive}회, 3개 이상: ${threeOrMore}회)`,
+      recommended_numbers: recommended,
+      explanation: '과거 100회차에서 연속번호 출현 패턴을 분석했습니다. 연속번호가 나올 확률을 고려하되, 너무 많은 연속은 피하는 균형잡힌 추천입니다.'
+    };
+    
+  } catch (error) {
+    console.error('Sequence analysis error:', error);
+    return {
+      type: 'sequence_analysis',
+      data: {},
+      summary: '연속 분석 중 오류가 발생했습니다.',
+      recommended_numbers: [],
+      explanation: '연속번호 데이터 분석에 문제가 발생했습니다.'
+    };
+  }
+}
+
+// 8. 확률 분석
+async function probabilityAnalysis(db: D1Database): Promise<StatisticsResult> {
+  try {
+    const totalDraws = await db.prepare('SELECT COUNT(*) as count FROM lotto_draws').first();
+    const totalCount = totalDraws.count;
+
+    // 각 번호의 빈도를 직접 계산
+    const frequencies: { [key: number]: number } = {};
+    
+    // 모든 당첨 번호 가져오기
+    const draws = await db.prepare(`
+      SELECT number1, number2, number3, number4, number5, number6 
+      FROM lotto_draws 
+      ORDER BY draw_number DESC
+    `).all();
+
+    // 각 번호의 빈도 계산
+    draws.results.forEach((draw: any) => {
+      [draw.number1, draw.number2, draw.number3, draw.number4, draw.number5, draw.number6].forEach((num: number) => {
+        frequencies[num] = (frequencies[num] || 0) + 1;
+      });
+    });
+    
+    // 이론적 확률은 각 번호가 6/45 = 13.33%
+    const theoreticalProb = (6 / 45) * 100;
+    
+    // 확률 편차 계산
+    const probabilityDeviations = [];
+    for (let num = 1; num <= 45; num++) {
+      const frequency = frequencies[num] || 0;
+      const actualProb = (frequency / (totalCount * 6)) * 100;
+      const deviation = actualProb - theoreticalProb;
+      probabilityDeviations.push({
+        number: num,
+        frequency,
+        actualProb,
+        deviation
+      });
+    }
+
+    // 이론적 확률에 가장 근접한 번호들과 편차가 큰 번호들 구분
+    const balanced = probabilityDeviations
+      .filter(p => Math.abs(p.deviation) < 1.0)
+      .sort((a, b) => Math.abs(a.deviation) - Math.abs(b.deviation));
+    
+    const underRepresented = probabilityDeviations
+      .filter(p => p.deviation < -1.0)
+      .sort((a, b) => a.deviation - b.deviation);
+
+    // 균형잡힌 확률 접근: 이론치에 가까운 번호 + 저평가된 번호 조합
+    const recommended = [];
+    
+    // 균형잡힌 번호에서 3개
+    balanced.slice(0, 3).forEach(p => recommended.push(p.number));
+    
+    // 저평가된 번호에서 2개 (반등 가능성)
+    underRepresented.slice(0, 2).forEach(p => recommended.push(p.number));
+    
+    // 나머지 1개는 랜덤
+    while (recommended.length < 6) {
+      const randomNum = Math.floor(Math.random() * 45) + 1;
+      if (!recommended.includes(randomNum)) {
+        recommended.push(randomNum);
+      }
+    }
+
+    recommended.sort((a: number, b: number) => a - b);
+
+    return {
+      type: 'probability_analysis',
+      data: { 
+        deviations: probabilityDeviations,
+        theoreticalProb,
+        totalDraws: totalCount
+      },
+      summary: `이론적 확률(${theoreticalProb.toFixed(1)}%) 대비 가장 균형잡힌 번호들과 저평가된 번호들을 조합하여 분석`,
+      recommended_numbers: recommended,
+      explanation: `총 ${totalCount}회차 데이터를 바탕으로 각 번호의 실제 출현 확률을 계산했습니다. 이론적 확률에 가까운 안정적인 번호와 저평가된 번호를 조합하여 확률적 균형을 맞춘 추천입니다.`
+    };
+    
+  } catch (error) {
+    console.error('Probability analysis error:', error);
+    return {
+      type: 'probability_analysis',
+      data: {},
+      summary: '확률 분석 중 오류가 발생했습니다.',
+      recommended_numbers: [],
+      explanation: '확률 데이터 계산에 문제가 발생했습니다.'
+    };
+  }
+}
+
+// 통계 분석 API 라우트들
+app.get('/api/statistics/frequency', async (c) => {
+  try {
+    const result = await frequencyAnalysis(c.env.DB);
+    return c.json(result);
+  } catch (error) {
+    return c.json({ success: false, error: 'Failed to analyze frequency' });
+  }
+});
+
+app.get('/api/statistics/hot-cold', async (c) => {
+  try {
+    const result = await hotColdAnalysis(c.env.DB);
+    return c.json(result);
+  } catch (error) {
+    return c.json({ success: false, error: 'Failed to analyze hot-cold numbers' });
+  }
+});
+
+app.get('/api/statistics/pattern', async (c) => {
+  try {
+    const result = await patternAnalysis(c.env.DB);
+    return c.json(result);
+  } catch (error) {
+    return c.json({ success: false, error: 'Failed to analyze patterns' });
+  }
+});
+
+app.get('/api/statistics/correlation', async (c) => {
+  try {
+    const result = await correlationAnalysis(c.env.DB);
+    return c.json(result);
+  } catch (error) {
+    return c.json({ success: false, error: 'Failed to analyze correlation' });
+  }
+});
+
+app.get('/api/statistics/trend', async (c) => {
+  try {
+    const result = await trendAnalysis(c.env.DB);
+    return c.json(result);
+  } catch (error) {
+    return c.json({ success: false, error: 'Failed to analyze trend' });
+  }
+});
+
+app.get('/api/statistics/distribution', async (c) => {
+  try {
+    const result = await distributionAnalysis(c.env.DB);
+    return c.json(result);
+  } catch (error) {
+    return c.json({ success: false, error: 'Failed to analyze distribution' });
+  }
+});
+
+app.get('/api/statistics/sequence', async (c) => {
+  try {
+    const result = await sequenceAnalysis(c.env.DB);
+    return c.json(result);
+  } catch (error) {
+    return c.json({ success: false, error: 'Failed to analyze sequence' });
+  }
+});
+
+app.get('/api/statistics/probability', async (c) => {
+  try {
+    const result = await probabilityAnalysis(c.env.DB);
+    return c.json(result);
+  } catch (error) {
+    return c.json({ success: false, error: 'Failed to analyze probability' });
+  }
+});
 
 export default app
