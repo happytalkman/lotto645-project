@@ -1,12 +1,23 @@
 {
-  "name": "webapp",
+  "name": "lotto645-ai",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "dev:sandbox": "wrangler pages dev dist --ip 0.0.0.0 --port 3000",
+    "dev:d1": "wrangler pages dev dist --d1=lotto645ai-production --local --ip 0.0.0.0 --port 3000",
     "preview": "wrangler pages dev",
     "deploy": "npm run build && wrangler pages deploy",
-    "cf-typegen": "wrangler types --env-interface CloudflareBindings"
+    "deploy:prod": "npm run build && wrangler pages deploy dist --project-name lotto645-ai",
+    "cf-typegen": "wrangler types --env-interface CloudflareBindings",
+    "clean-port": "fuser -k 3000/tcp 2>/dev/null || true",
+    "test": "curl http://localhost:3000",
+    "db:migrate:local": "wrangler d1 migrations apply lotto645ai-production --local",
+    "db:migrate:prod": "wrangler d1 migrations apply lotto645ai-production",
+    "db:seed": "wrangler d1 execute lotto645ai-production --local --file=./seed.sql",
+    "db:reset": "rm -rf .wrangler/state/v3/d1 && npm run db:migrate:local && npm run db:seed",
+    "db:console:local": "wrangler d1 execute lotto645ai-production --local",
+    "db:console:prod": "wrangler d1 execute lotto645ai-production"
   },
   "dependencies": {
     "hono": "^4.9.7"
