@@ -183,6 +183,210 @@ export interface PersonalizedRecommendationRequest {
   include_favorites_only?: boolean;
 }
 
+// 구독 플랜 타입
+export interface SubscriptionPlan {
+  id: number;
+  plan_name: 'basic' | 'premium' | 'platinum';
+  display_name: string;
+  price_monthly: number;
+  price_yearly: number;
+  features: string[]; // JSON으로 저장되지만 파싱 후 배열
+  max_predictions_per_day: number; // -1은 무제한
+  max_saved_predictions: number; // -1은 무제한
+  ai_analysis_limit: number; // -1은 무제한
+  premium_algorithms: boolean;
+  advanced_analytics: boolean;
+  priority_support: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// 사용자 구독 타입
+export interface UserSubscription {
+  id: number;
+  user_id: number;
+  plan_id: number;
+  status: 'active' | 'cancelled' | 'expired' | 'trial';
+  subscription_type: 'monthly' | 'yearly' | 'trial';
+  start_date: string;
+  end_date: string;
+  auto_renew: boolean;
+  payment_method?: string;
+  payment_status: 'pending' | 'paid' | 'failed';
+  trial_used: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// 결제 기록 타입
+export interface PaymentHistory {
+  id: number;
+  user_id: number;
+  subscription_id: number;
+  amount: number;
+  currency: string;
+  payment_method?: string;
+  payment_provider_id?: string;
+  status: 'pending' | 'completed' | 'failed' | 'refunded';
+  payment_date?: string;
+  refund_date?: string;
+  refund_amount?: number;
+  metadata?: Record<string, any>;
+  created_at?: string;
+}
+
+// 사용량 추적 타입
+export interface UsageTracking {
+  id: number;
+  user_id: number;
+  date: string;
+  predictions_count: number;
+  analysis_requests: number;
+  api_calls: number;
+  premium_features_used: string[]; // JSON으로 저장되지만 파싱 후 배열
+  created_at?: string;
+  updated_at?: string;
+}
+
+// 기능 접근 권한 로그 타입
+export interface FeatureAccessLog {
+  id: number;
+  user_id: number;
+  feature_name: string;
+  access_granted: boolean;
+  subscription_plan?: string;
+  access_time?: string;
+  ip_address?: string;
+  user_agent?: string;
+}
+
+// 구독 업그레이드 요청 타입
+export interface SubscriptionUpgradeRequest {
+  target_plan: 'premium' | 'platinum';
+  payment_method: 'stripe' | 'paypal' | 'crypto';
+  billing_cycle: 'monthly' | 'yearly';
+  promo_code?: string;
+}
+
+// 기능 권한 체크 결과 타입
+export interface FeaturePermission {
+  has_access: boolean;
+  reason?: string;
+  upgrade_required?: boolean;
+  current_usage?: number;
+  daily_limit?: number;
+  plan_required?: 'premium' | 'platinum';
+}
+
+// 고급 분석 타입들
+export interface CombinationAnalysis {
+  id: number;
+  analysis_type: 'pair' | 'triple' | 'quadruple' | 'sequence' | 'sum_range';
+  combination_data: Record<string, any>; // JSON 파싱 후 객체
+  frequency: number;
+  probability: number;
+  last_appearance?: number;
+  gap_analysis?: Record<string, any>;
+  recommendation_score: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface PredictionAccuracy {
+  id: number;
+  user_id?: number;
+  prediction_id?: number;
+  algorithm_type: PredictionAlgorithm;
+  predicted_numbers: number[];
+  actual_draw_number?: number;
+  actual_numbers?: number[];
+  accuracy_score: number; // 0-6 맞춘 개수
+  bonus_match: boolean;
+  prize_tier?: '1등' | '2등' | '3등' | '4등' | '5등' | '낙첨';
+  points_earned: number;
+  confidence_vs_accuracy?: number;
+  created_at?: string;
+}
+
+export interface AlgorithmPerformance {
+  id: number;
+  algorithm_type: PredictionAlgorithm;
+  total_predictions: number;
+  accuracy_by_count: Record<string, number>; // {"0": count, "1": count, ...}
+  average_accuracy: number;
+  best_accuracy: number;
+  confidence_reliability: number;
+  last_updated?: string;
+}
+
+export interface AdvancedNumberPattern {
+  id: number;
+  pattern_type: 'consecutive' | 'arithmetic' | 'geometric' | 'fibonacci' | 'prime';
+  pattern_data: Record<string, any>;
+  frequency: number;
+  success_rate: number;
+  average_gap: number;
+  trend_direction?: 'increasing' | 'decreasing' | 'stable';
+  recommendation_weight: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface AnalysisCache {
+  id: number;
+  cache_key: string;
+  analysis_type: string;
+  result_data: Record<string, any>;
+  computation_time_ms?: number;
+  expires_at: string;
+  hit_count: number;
+  created_at?: string;
+  last_accessed?: string;
+}
+
+export interface UserAnalysisHistory {
+  id: number;
+  user_id: number;
+  analysis_type: string;
+  analysis_params?: Record<string, any>;
+  execution_time?: string;
+  processing_time_ms?: number;
+  result_summary?: string;
+  satisfaction_rating?: number; // 1-5
+}
+
+// 고급 분석 요청 타입
+export interface AdvancedAnalysisRequest {
+  analysis_type: 'combination' | 'accuracy_tracking' | 'pattern_recognition' | 'algorithm_performance';
+  parameters?: {
+    combination_type?: 'pair' | 'triple' | 'quadruple' | 'sequence' | 'sum_range';
+    algorithm_filter?: PredictionAlgorithm[];
+    date_range?: {
+      start_date: string;
+      end_date: string;
+    };
+    min_frequency?: number;
+    min_accuracy?: number;
+  };
+  user_id?: number;
+}
+
+// 고급 분석 결과 타입
+export interface AdvancedAnalysisResult {
+  analysis_type: string;
+  data: Record<string, any>;
+  insights: string[];
+  recommendations: number[];
+  performance_metrics?: {
+    computation_time_ms: number;
+    data_points_analyzed: number;
+    confidence_score: number;
+  };
+  visualization_config?: Record<string, any>; // Chart.js 설정
+  summary: string;
+  created_at: string;
+}
+
 export interface Bindings {
   DB: D1Database;
   AI?: Ai;
