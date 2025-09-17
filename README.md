@@ -9,7 +9,7 @@
 ## 공개 URL
 
 - **개발 서버**: https://3000-irzoqnqwwkij0968hkeys-6532622b.e2b.dev
-- **GitHub**: 추후 배포 예정
+- **GitHub**: https://github.com/happytalkman/lotto645-project
 
 ## 핵심 기능
 
@@ -141,6 +141,16 @@
 #### 🆕 개인화 추천 API
 - `POST /api/recommendations/personalized` - RAG 기반 개인화 추천
 
+#### ✅ 통계 분석 API (완료)
+- `GET /api/statistics/frequency` - 빈도 분석
+- `GET /api/statistics/hot-cold` - 핫/콜드 번호 분석
+- `GET /api/statistics/pattern` - 패턴 분석  
+- `GET /api/statistics/correlation` - 상관관계 분석
+- `GET /api/statistics/trend` - 트렌드 분석
+- `GET /api/statistics/distribution` - 분포 분석
+- `GET /api/statistics/sequence` - 연속 분석
+- `GET /api/statistics/probability` - 확률 분석 (최근 수정됨)
+
 ### API 사용 예시
 
 #### 기본 기능
@@ -157,6 +167,18 @@ curl -X POST https://3000-irzoqnqwwkij0968hkeys-6532622b.e2b.dev/api/chatbot \
 curl -X POST https://3000-irzoqnqwwkij0968hkeys-6532622b.e2b.dev/api/prediction \
   -H "Content-Type: application/json" \
   -d '{"algorithm":"bayesian_inference"}'
+```
+
+#### ✅ 통계 분석 API 사용법 (완료)
+```bash
+# 빈도 분석
+curl https://3000-irzoqnqwwkij0968hkeys-6532622b.e2b.dev/api/statistics/frequency
+
+# 확률 분석 (최근 수정됨)
+curl https://3000-irzoqnqwwkij0968hkeys-6532622b.e2b.dev/api/statistics/probability
+
+# 패턴 분석
+curl https://3000-irzoqnqwwkij0968hkeys-6532622b.e2b.dev/api/statistics/pattern
 ```
 
 #### 🆕 예측저장 기능
@@ -231,9 +253,32 @@ curl -X POST https://3000-irzoqnqwwkij0968hkeys-6532622b.e2b.dev/api/recommendat
 ## 배포 상태
 
 - **플랫폼**: Cloudflare Pages
-- **상태**: ✅ 개발 서버 활성화 (로컬 환경)
-- **마지막 업데이트**: 2025-09-17
+- **상태**: ✅ 개발 서버 활성화 + GitHub 리포지토리 완성
+- **마지막 업데이트**: 2025-09-17 (확률 분석 수정, 8개 통계 API 완성)
 - **데이터**: 599회분 로또 데이터 (2002-2025년)
+
+### 🆕 최근 업데이트 (2025-09-17)
+
+#### ✅ 완료된 수정사항
+1. **확률 분석 오류 수정**
+   - SQLite "too many terms in compound SELECT" 오류 해결
+   - 복잡한 UNION 쿼리를 단순한 반복문 방식으로 변경
+   - 빈도 분석과 동일한 패턴 적용
+
+2. **8개 통계 API 완성**
+   - `/api/statistics/frequency` - 빈도 분석 ✅
+   - `/api/statistics/hot-cold` - 핫/콜드 번호 분석 ✅
+   - `/api/statistics/pattern` - 패턴 분석 ✅
+   - `/api/statistics/correlation` - 상관관계 분석 ✅
+   - `/api/statistics/trend` - 트렌드 분석 ✅
+   - `/api/statistics/distribution` - 분포 분석 ✅
+   - `/api/statistics/sequence` - 연속 분석 ✅
+   - `/api/statistics/probability` - 확률 분석 ✅ (수정됨)
+
+3. **GitHub 리포지토리 완성**
+   - 전체 코드베이스 GitHub 업로드 완료
+   - 상세한 커밋 메시지와 기능 설명 포함
+   - 모든 기능 테스트 완료 및 검증
 
 ## 개발 환경 설정
 
