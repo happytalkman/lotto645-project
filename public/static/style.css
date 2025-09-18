@@ -1,1 +1,209 @@
-h1 { font-family: Arial, Helvetica, sans-serif; }
+/* Lotto645.AI 동양철학 스타일 */
+h1 { 
+    font-family: Arial, Helvetica, sans-serif; 
+}
+
+/* 번호볼 애니메이션 */
+.number-ball {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: numberGenerate 0.8s ease-out;
+}
+
+@keyframes numberGenerate {
+    0% {
+        opacity: 0;
+        transform: scale(0.5) rotate(180deg);
+    }
+    50% {
+        transform: scale(1.2) rotate(90deg);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) rotate(0deg);
+    }
+}
+
+/* 펄스 애니메이션 */
+.animate-pulse {
+    animation: pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.8;
+        transform: scale(1.05);
+    }
+}
+
+/* 그라디언트 배경 애니메이션 */
+.gradient-animate {
+    background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+    background-size: 400% 400%;
+    animation: gradientShift 15s ease infinite;
+}
+
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* 카드 호버 효과 강화 */
+.card-hover {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-hover:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* 로딩 스피너 */
+.loading-spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* 토스트 메시지 애니메이션 */
+.toast-enter {
+    animation: toastSlideIn 0.3s ease-out;
+}
+
+.toast-exit {
+    animation: toastSlideOut 0.3s ease-in;
+}
+
+@keyframes toastSlideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes toastSlideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+/* 모달 애니메이션 */
+.modal-backdrop {
+    animation: backdropFadeIn 0.2s ease-out;
+}
+
+.modal-content {
+    animation: modalSlideUp 0.3s ease-out;
+}
+
+@keyframes backdropFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes modalSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* 번호 생성 시퀀스 애니메이션 */
+.number-sequence {
+    animation: sequenceReveal 0.6s ease-out;
+}
+
+@keyframes sequenceReveal {
+    0% {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 음양 기호 회전 애니메이션 */
+.yin-yang-rotate {
+    animation: yinYangSpin 20s linear infinite;
+}
+
+@keyframes yinYangSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* 배경 장식 요소 플로팅 */
+.floating {
+    animation: floating 6s ease-in-out infinite;
+}
+
+@keyframes floating {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+}
+
+/* 성공/오류 상태 색상 */
+.success-gradient {
+    background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.error-gradient {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.info-gradient {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
+/* 테마별 그라디언트 */
+.dream-gradient {
+    background: linear-gradient(135deg, #ec4899, #8b5cf6);
+}
+
+.geomancy-gradient {
+    background: linear-gradient(135deg, #10b981, #14b8a6);
+}
+
+.saju-gradient {
+    background: linear-gradient(135deg, #3b82f6, #6366f1);
+}
+
+.comprehensive-gradient {
+    background: linear-gradient(135deg, #8b5cf6, #ec4899);
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    .number-ball {
+        width: 2.5rem;
+        height: 2.5rem;
+        font-size: 0.875rem;
+    }
+    
+    .modal-content {
+        margin: 1rem;
+        max-height: 90vh;
+    }
+}
